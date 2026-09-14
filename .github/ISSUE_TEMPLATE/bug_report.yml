@@ -1,0 +1,61 @@
+name: 🐞 Bug report
+description: Report a bug or an issue.
+title: "bug: "
+labels: ["Bug report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # SwiftKey Morphe Patches — របាយការណ៍​បញ្ហា
+
+        មុននឹង​បើក​របាយការណ៍​ថ្មី៖
+
+        - **កុំ​បើក​ស្ទួន**៖ ស្វែងរក​បញ្ហា​ដែល​មាន​ស្រាប់ [នៅទីនេះ](../../issues?q=label%3A%22Bug+report%22)
+        - **អាន​ការណែនាំ​ការចូលរួម** នៅ [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md)
+        - ត្រូវ​ប្រាកដ​ថា​អ្នក​កំពុង​ប្រើ SwiftKey កំណែ​គោលដៅ **9.13.13.5**
+  - type: textarea
+    attributes:
+      label: Bug description
+      description: |
+        - ពិពណ៌នា​បញ្ហា​ឲ្យ​បាន​លម្អិត
+        - សរសេរ​ជំហាន​បង្កើត​បញ្ហា​ឡើងវិញ (Step 1. ... Step 2. ...)
+        - ភ្ជាប់​រូបថត/វីដេអូ​បើ​អាច
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: SwiftKey version
+      description: កំណែ APK ដែល​បាន patch (ឧ. 9.13.13.5)
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Patches enabled
+      description: រាយ​បំណះ​ទាំងអស់​ដែល​បាន​បើក​ពេល​កើត​បញ្ហា
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Error logs
+      description: អាច​ចាប់ exception ដោយ​រត់ `logcat | grep AndroidRuntime` ក្នុង shell។
+      render: shell
+  - type: textarea
+    attributes:
+      label: Solution
+      description: បើ​មាន គំនិត​ដំណោះស្រាយ​ដែល​អាច​ធ្វើ​បាន។
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: ព័ត៌មាន​បន្ថែម​ផ្សេងៗ។
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Acknowledgements
+      description: របាយការណ៍​នឹង​ត្រូវ​បិទ បើ​អ្នក​មិន​ធីក​បញ្ជាក់​ខាងក្រោម។
+      options:
+        - label: ខ្ញុំ​បាន​ពិនិត្យ issues ទាំង​បើក និង​បិទ ហើយ​បញ្ហា​នេះ​មិនមែន​ស្ទួន។
+          required: true
+        - label: ខ្ញុំ​បាន​ដាក់​ចំណងជើង​សមរម្យ។
+          required: true
+        - label: ព័ត៌មាន​ដែល​ស្នើ​ទាំងអស់​ត្រូវ​បាន​បំពេញ​ត្រឹមត្រូវ។
+          required: true
