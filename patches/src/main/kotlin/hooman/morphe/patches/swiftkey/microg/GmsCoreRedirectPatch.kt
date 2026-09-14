@@ -73,7 +73,10 @@ val gmsCoreBytecodeRedirectPatch = bytecodePatch(
                 val mutableMethod = mutableClass.methods.firstOrNull { candidate ->
                     candidate.name == method.name &&
                         candidate.returnType == method.returnType &&
-                        candidate.parameterTypes.size == method.parameterTypes.size
+                        candidate.parameterTypes.size == method.parameterTypes.size &&
+                        candidate.parameterTypes.zip(method.parameterTypes).all { (a, b) ->
+                            a.toString() == b.toString()
+                        }
                 } ?: return@forEach
 
                 // ប្តូរ​ពី​ក្រោយ​ទៅ​មុខ ដើម្បី​រក្សា​លេខ​រៀង​សេចក្តី​ណែនាំ​មុនៗ។
