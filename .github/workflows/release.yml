@@ -45,7 +45,10 @@ jobs:
         run: |
           set -euo pipefail
           echo "::notice::patches/build tree: $(find patches/build -maxdepth 2 2>/dev/null | tr '\n' ' ' | cut -c1-800)"
-          mapfile -t bundles < <(find patches/build -type f -name 'patches-*.mpp' \
+          # ឈ្មោះ bundle អាចមាន ឬមិនមានលេខកំណែ៖ `patches-<version>.mpp` នៅពេល
+          # gradle.properties កំណត់ version (main/release) និង `patches.mpp` នៅពេល version
+          # មិនបានកំណត់ (dev គ្មាន gradle.properties ដោយសារ back-merge រក្សាវាតាម branch)
+          mapfile -t bundles < <(find patches/build -type f -name 'patches*.mpp' \
             ! -name '*-sources.mpp' ! -name '*-javadoc.mpp' 2>/dev/null | sort)
           echo "::notice::.mpp bundles found: ${bundles[*]:-none}"
           if (( ${#bundles[@]} == 0 )); then
@@ -76,7 +79,7 @@ jobs:
       - name: Remove pre-release bundle
         run: |
           set -euo pipefail
-          rm -fv patches/build/libs/patches-*.mpp
+          rm -fv patches/build/libs/patches*.mpp
 
       - name: Release
         uses: cycjimmy/semantic-release-action@v6
@@ -94,10 +97,15 @@ jobs:
           version="${TAG#v}"
           bundle="patches/build/libs/patches-${version}.mpp"
           if [[ ! -f "$bundle" ]]; then
-            # fallback: រកតាមឈ្មោះកំណែ គ្រប់ទីកន្លែងក្រោម patches/build
+            # fallback: រកតាមឈ្មោះកំណែ គ្រប់ទីកន្លែងក្រោម patches/build។ បើនៅតែមិនឃើញ
+            # យកបានតែ `patches.mpp` (ករណី version មិនបានកំណត់) — មិនយក bundle ដែលមាន
+            # លេខកំណែខុសពី tag ទេ ព្រោះវាជាឯកសារចាស់។
             mapfile -t found < <(find patches/build -type f -name "patches-${version}.mpp" \
               ! -name '*-sources.mpp' ! -name '*-javadoc.mpp' 2>/dev/null | sort)
-            echo "::notice::.mpp for ${version} found: ${found[*]:-none}"
+            if (( ${#found[@]} == 0 )); then
+              mapfile -t found < <(find patches/build -type f -name 'patches.mpp' 2>/dev/null | sort)
+            fi
+            echo "::notice::.mpp candidates for ${TAG}: ${found[*]:-none}"
             if (( ${#found[@]} != 1 )); then
               echo "::error::Released ${TAG} but ${bundle} is missing"
               echo "::notice::patches/build tree: $(find patches/build -maxdepth 3 2>/dev/null | tr '\n' ' ' | cut -c1-800)"

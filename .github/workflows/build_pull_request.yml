@@ -37,7 +37,10 @@ jobs:
         run: |
           set -euo pipefail
           echo "::notice::patches/build tree: $(find patches/build -maxdepth 2 2>/dev/null | tr '\n' ' ' | cut -c1-800)"
-          mapfile -t bundles < <(find patches/build -type f -name 'patches-*.mpp' \
+          # ឈ្មោះ bundle អាចមាន ឬមិនមានលេខកំណែ៖ `patches-<version>.mpp` នៅពេល
+          # gradle.properties កំណត់ version (main/release) និង `patches.mpp` នៅពេល version
+          # មិនបានកំណត់ (dev គ្មាន gradle.properties ដោយសារ back-merge រក្សាវាតាម branch)
+          mapfile -t bundles < <(find patches/build -type f -name 'patches*.mpp' \
             ! -name '*-sources.mpp' ! -name '*-javadoc.mpp' 2>/dev/null | sort)
           echo "::notice::.mpp bundles found: ${bundles[*]:-none}"
           if (( ${#bundles[@]} == 0 )); then
