@@ -19,6 +19,28 @@
 |------|--------------|
 | **Disable cloud sign-in prompt** | បិទ​អេក្រង់​បង្ខំ​ឲ្យ​ចូល​គណនី Microsoft cloud ពេល​បើក​កម្មវិធី ដើម្បី​ឲ្យ​ការដំឡើង​ក្តារចុច និង​ការកំណត់​មូលដ្ឋាន​ប្រើ​បាន​ដោយ​មិនចាំបាច់​ login (មិនមែន​ចូលគណនី ហើយ​មិន​ដោះ cloud sync) |
 | **Disable telemetry** | បញ្ឈប់​ការបញ្ជូន​ទិន្នន័យតាមដាន៖ telemetry ផ្ទាល់របស់ SwiftKey, Adjust, Crashlytics, Firebase Sessions, Google Analytics ចាស់ និង​របាយការណ៍​គាំង — ខណៈ​ push notifications និង job service នៅ​ដំណើរការ |
+| **🎙️ Fix microphone voice input** | ដោះ​ទ្វារ​បង្ខំ "ទាញយក Google Voice Search"៖ ប៊ូតុង​មីក្រូហ្វូន​ហៅ​ម៉ាស៊ីន​សម្គាល់​សំឡេង​លំនាំដើម​របស់​ប្រព័ន្ធ (Kõnele/Vosk ក្រៅ​បណ្ដាញ ឬ Speech Recognition & Synthesis) បាន​ភ្លាមៗ​ដូច Gboard |
+| **GmsCore support (MicroG RE)** | បំណះ​ឆ័ត្រ​សម្រាប់​ឧបករណ៍​គ្មាន GMS ដែល​ដំឡើង MicroG RE — ទាញ​យក​បំណះ​រង​ទាំង ៤​ខាងក្រោម |
+| ↳ GmsCore Bytecode Redirect (MicroG RE 7.1.2) | ប្ដូរ​ទិស​រាល់​សេចក្តីយោង Google Play Services (កញ្ចប់ GMS, vendor គណនី, សិទ្ធិ c2dm/GMS, authorities) ទៅ `app.revanced.android.gms` |
+| ↳ GmsCore Signature and Availability Bypass | បិទ​ការ​ត្រួតពិនិត្យ​ភាព​មាន និង​លេខ​កំណែ GMS ដែល​រារាំង​កម្មវិធី​ពេល​គ្មាន Play Services (តម្លៃ​ត្រឡប់ = SUCCESS) |
+| ↳ MicroG Account Permissions | ស្នើ​សិទ្ធិ `GET_ACCOUNTS` និង `app.revanced.gms.EXTENDED_ACCESS` នៅ​ពេល​រត់ ឲ្យ​ការ​ចូល​គណនី​លើ​ GmsCore ដំណើរការ |
+| ↳ Process Name Spoofing for Clone Support | ពេល​ដាក់​ជា​ក្លូន (មាន​បច្ច័យ `.morphe`) កាត់​បច្ច័យ​នេះ​ចេញ​ពី​ឈ្មោះ​ដំណើរការ​ដែល​កម្មវិធី​អាន ដើម្បី​កុំឲ្យ routing ខាងក្នុង​វង្វេង/គាំង |
+
+### 🎙️ តម្រូវការ​សម្រាប់​មីក្រូហ្វូន
+
+បំណះ​មីក្រូហ្វូន​ដក​តែ​ច្រក​របាំង Google ចេញ — វា **មិនមាន​ម៉ាស៊ីន​សម្គាល់​សំឡេង​ភ្ជាប់​មក​ទេ**។ អ្នកត្រូវ៖
+
+1. ដំឡើង​កម្មវិធី RecognitionService ណាមួយ៖
+   - **[Kõnele](https://github.com/Kaljurand/K6nele)** — ប្រើ Vosk សម្គាល់​ក្រៅ​បណ្ដាញ​ទាំងស្រុង (ណែនាំ)
+   - ឬ **Speech Recognition & Synthesis** (`com.google.android.tts`)
+2. កំណត់​វា​ជា​ម៉ាស៊ីន​លំនាំដើម៖ *Settings → System → Languages & input → Voice input / Speech recognition*។
+3. បិទ **Multi-modal voice typing** ក្នុង SwiftKey Settings → Rich input បើ​ចង់​ឲ្យ​ប្រើ​ម៉ាស៊ីន​ប្រព័ន្ធ (មិនមែន​សេវា Azure របស់ Microsoft)។
+
+### 🧩 តម្រូវការ​សម្រាប់ GmsCore
+
+- ដំឡើង **[MicroG RE](https://github.com/MorpheApp/MicroG-RE)** (កញ្ចប់ `app.revanced.android.gms`) ហើយ​បន្ថែម​គណនី​ក្នុង​កម្មវិធី microG (មិនមែន​ក្នុង SwiftKey)។
+- បំណះ GmsCore មិន​ដោះ Microsoft cloud login/sync ទេ — វា​គ្រាន់តែ​ធ្វើ​ឲ្យ​ផ្នែក​ដែល​ពឹង Firebase/GMS (push ជាដើម) ដើរ​តាម GmsCore។
+- **សម្រាប់​ការ​ក្លូន​ប៉ុណ្ណោះ**៖ បើ​អ្នក​ប្ដូរ​ឈ្មោះ​កញ្ចប់ (clone) សូម​បំពេញ option *Original signing certificate SHA-1* ដែល​អាន​ពី APK ដើម​ដោយ​ពាក្យ `apksigner verify --print-cert SwiftKey.apk`។
 
 ## 📥 របៀប​ដំឡើង និង​ប្រើ
 
@@ -62,10 +84,24 @@
 │       ├── login/                     # បំណះ "Disable cloud sign-in prompt"
 │       │   ├── DisableCloudSignInPromptPatch.kt
 │       │   └── Fingerprints.kt
-│       └── privacy/                   # បំណះ "Disable telemetry"
-│           ├── DisableTelemetryPatch.kt
-│           └── Fingerprints.kt
-├── extensions/                  # កូដ​ផ្ទាល់ (.mpe) សម្រាប់​ចាក់​បញ្ចូល APK — ទុកសម្រាប់​មុខងារថ្មី
+│       ├── privacy/                   # បំណះ "Disable telemetry"
+│       │   ├── DisableTelemetryPatch.kt
+│       │   └── Fingerprints.kt
+│       ├── voice/                     # 🎙️ បំណះ "Fix microphone voice input"
+│       │   └── MicrophoneFixPatch.kt
+│       ├── microg/                    # ក្រុម​បំណះ GmsCore/MicroG RE
+│       │   ├── GmsCoreSupportPatch.kt            # បំណះ​ឆ័ត្រ
+│       │   ├── GmsCoreRedirectPatch.kt + GmsConstants.kt
+│       │   ├── AvailabilityBypassPatch.kt + Fingerprints.kt
+│       │   ├── AccountPermissionsPatch.kt
+│       │   └── ProcessNameSpoofPatch.kt
+│       └── support/                   # កូដ​ចែករំលែក៖ ការកែ manifest + ឧបករណ៍​ឆ្លាស់ invoke
+├── extensions/
+│   ├── proguard-rules.pro
+│   └── swiftkey/                      # Extension .mpe (Java runtime ចាក់​បញ្ចូល APK)
+│       └── src/main/java/app/morphe/extension/swiftkey/
+│           ├── MicSupport.java        # មីក្រូហ្វូន + ការ​ជ្រើស​ម៉ាស៊ីន​សម្គាល់​សំឡេង
+│           └── GmsSupport.java        # សិទ្ធិ​គណនី microG + ការ​ធ្វើ​ឲ្យ​ឈ្មោះ​ដំណើរការ​ស្អាត
 └── .github/                     # CI build + semantic-release + backmerge
 ```
 
