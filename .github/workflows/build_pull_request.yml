@@ -74,6 +74,10 @@ jobs:
           done
 
       # ទុក bundle ឲ្យ reviewer ទាញយកទៅសាកក្នុង Morphe Manager បានភ្លាម
+      # បណ្តោះអាសន្ន៖ សាក smali compiler ដើម្បីរកមូលហេតុ "Collection is empty."
+      - name: Diagnose smali compiler
+        run: ./gradlew diagnoseSmali -q --no-daemon
+
       - name: Upload .mpp bundle artifact
         uses: actions/upload-artifact@v7
         with:
