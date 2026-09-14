@@ -10,6 +10,9 @@ jobs:
   release:
     name: Build
     runs-on: ubuntu-latest
+    env:
+      # ត្រូវការសម្រាប់ទាញ Morphe plugin ពី GitHub Packages (MorpheApp/registry)
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -18,12 +21,44 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '17'
+          # សមនឹង release.yml និង README (AGP 9 + compileSdk 36)
+          java-version: '21'
 
       - name: Cache Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :patches:buildAndroid --no-daemon
+      - name: Build .mpp bundle
+        run: ./gradlew :patches:buildAndroid generatePatchesList --no-daemon
+
+      # ត្រួតពិនិត្យថា bundle .mpp ចេញមែន ហើយបញ្ជូន path ពិតទៅ step ខាងក្រោម
+      # (upload-artifact មិនស្គាល់ extglob ដូច !(*sources*) ទេ ដូច្នេះត្រូវដាក់ path ច្បាស់លាស់)
+      - name: Verify .mpp bundle
+        id: verify
+        run: |
+          set -euo pipefail
+          shopt -s extglob nullglob
+          bundles=( patches/build/libs/patches-!(*sources*|*javadoc*).mpp )
+          if (( ${#bundles[@]} == 0 )); then
+            echo "::error::No .mpp bundle produced in patches/build/libs"
+            ls -la patches/build/libs || true
+            exit 1
+          fi
+          {
+            echo "paths<<EOF"
+            printf '%s\n' "${bundles[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          for bundle in "${bundles[@]}"; do
+            size=$(stat -c %s "$bundle")
+            echo "✅ Built bundle: $bundle ($size bytes)"
+            echo "- \`$bundle\` — $size bytes" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      # ទុក bundle ឲ្យ reviewer ទាញយកទៅសាកក្នុង Morphe Manager បានភ្លាម
+      - name: Upload .mpp bundle artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: patches-bundle-${{ github.sha }}
+          path: ${{ steps.verify.outputs.paths }}
+          if-no-files-found: error
+          retention-days: 14

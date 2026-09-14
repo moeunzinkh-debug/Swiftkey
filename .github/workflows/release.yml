@@ -16,6 +16,10 @@ jobs:
       id-token: write
       attestations: write
     runs-on: ubuntu-latest
+    env:
+      # គ្រប់ gradle invocation ត្រូវការ token នេះ ដើម្បីទាញ Morphe plugin ពី
+      # GitHub Packages (MorpheApp/registry) តាម settings.gradle.kts
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -31,10 +35,27 @@ jobs:
       - name: Cache Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :patches:buildAndroid generatePatchesList clean
+      # ១) build bundle .mpp មុនគេ — បើបំណះខូច ការងារនេះបរាជ័យត្រង់នេះ
+      #    មុនពេល semantic-release កែ CHANGELOG/README/gradle.properties
+      - name: Build .mpp bundle
+        run: ./gradlew :patches:buildAndroid generatePatchesList
+
+      # ២) ត្រួតពិនិត្យថា .mpp ចេញមែន — កុំឲ្យមាន release ដែលគ្មាន bundle
+      - name: Verify .mpp bundle
+        run: |
+          set -euo pipefail
+          shopt -s extglob nullglob
+          bundles=( patches/build/libs/patches-!(*sources*|*javadoc*).mpp )
+          if (( ${#bundles[@]} == 0 )); then
+            echo "::error::No .mpp bundle produced in patches/build/libs"
+            ls -la patches/build/libs || true
+            exit 1
+          fi
+          for bundle in "${bundles[@]}"; do
+            size=$(stat -c %s "$bundle")
+            echo "✅ Built bundle: $bundle ($size bytes)"
+            echo "- \`$bundle\` — $size bytes" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -45,15 +66,53 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # ៣) លុប bundle ដែល build ខាងលើចេញ (វាយកលេខកំណែចាស់ពី gradle.properties)។
+      #    semantic-release បន្ទាន់សម័យ gradle.properties មុន រួចដំណើរការ
+      #    `./gradlew publish` → `publish.dependsOn(buildAndroid)` (Morphe plugin)
+      #    ដូច្នេះ .mpp តែមួយគត់ដែលឡើងទៅ GitHub Release គឺ patches-<កំណែថ្មី>.mpp។
+      #    បើមិនលុបទេ release ក្រោយៗ នឹងមាន .mpp ចាស់នៅជាប់ផង
+      #    (glob ក្នុង .releaserc យក patches-*.mpp ទាំងអស់)។
+      - name: Remove pre-release bundle
+        run: |
+          set -euo pipefail
+          rm -fv patches/build/libs/patches-*.mpp
+
       - name: Release
         uses: cycjimmy/semantic-release-action@v6
         id: release
+
+      # ៤) រក bundle ត្រឹមត្រូវតាម tag ដែលបានចេញផ្សាយ (មិនមែន wildcard)
+      #    ដើម្បីឲ្យ attestation និង artifact សំដៅលើឯកសារតែមួយគត់
+      - name: Locate released .mpp bundle
+        id: bundle
+        if: steps.release.outputs.new_release_published == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.new_release_git_tag }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          bundle="patches/build/libs/patches-${version}.mpp"
+          if [[ ! -f "$bundle" ]]; then
+            echo "::error::Released ${TAG} but ${bundle} is missing"
+            ls -la patches/build/libs || true
+            exit 1
+          fi
+          size=$(stat -c %s "$bundle")
+          echo "path=${bundle}" >> "$GITHUB_OUTPUT"
+          echo "✅ Released bundle: ${bundle} (${size} bytes)"
 
       - name: Attest
         if: steps.release.outputs.new_release_published == 'true'
         uses: actions/attest-build-provenance@v4
         with:
           subject-name: 'Morphe Patches ${{ steps.release.outputs.new_release_git_tag }}'
-          subject-path: patches/build/libs/patches-*.mpp
+          subject-path: ${{ steps.bundle.outputs.path }}
+
+      - name: Upload .mpp bundle artifact
+        if: steps.release.outputs.new_release_published == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: mpp-${{ steps.release.outputs.new_release_git_tag }}
+          path: ${{ steps.bundle.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
