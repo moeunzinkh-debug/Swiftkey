@@ -36,11 +36,12 @@ jobs:
         id: verify
         run: |
           set -euo pipefail
-          shopt -s extglob nullglob
-          bundles=( patches/build/libs/patches-!(*sources*|*javadoc*).mpp )
+          echo "::notice::patches/build tree: $(find patches/build -maxdepth 2 2>/dev/null | tr '\n' ' ' | cut -c1-800)"
+          mapfile -t bundles < <(find patches/build -type f -name 'patches-*.mpp' \
+            ! -name '*-sources.mpp' ! -name '*-javadoc.mpp' 2>/dev/null | sort)
+          echo "::notice::.mpp bundles found: ${bundles[*]:-none}"
           if (( ${#bundles[@]} == 0 )); then
-            echo "::error::No .mpp bundle produced in patches/build/libs"
-            ls -la patches/build/libs || true
+            echo "::error::No .mpp bundle produced under patches/build"
             exit 1
           fi
           {

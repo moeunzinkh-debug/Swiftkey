@@ -44,11 +44,12 @@ jobs:
       - name: Verify .mpp bundle
         run: |
           set -euo pipefail
-          shopt -s extglob nullglob
-          bundles=( patches/build/libs/patches-!(*sources*|*javadoc*).mpp )
+          echo "::notice::patches/build tree: $(find patches/build -maxdepth 2 2>/dev/null | tr '\n' ' ' | cut -c1-800)"
+          mapfile -t bundles < <(find patches/build -type f -name 'patches-*.mpp' \
+            ! -name '*-sources.mpp' ! -name '*-javadoc.mpp' 2>/dev/null | sort)
+          echo "::notice::.mpp bundles found: ${bundles[*]:-none}"
           if (( ${#bundles[@]} == 0 )); then
-            echo "::error::No .mpp bundle produced in patches/build/libs"
-            ls -la patches/build/libs || true
+            echo "::error::No .mpp bundle produced under patches/build"
             exit 1
           fi
           for bundle in "${bundles[@]}"; do
@@ -93,9 +94,16 @@ jobs:
           version="${TAG#v}"
           bundle="patches/build/libs/patches-${version}.mpp"
           if [[ ! -f "$bundle" ]]; then
-            echo "::error::Released ${TAG} but ${bundle} is missing"
-            ls -la patches/build/libs || true
-            exit 1
+            # fallback: រកតាមឈ្មោះកំណែ គ្រប់ទីកន្លែងក្រោម patches/build
+            mapfile -t found < <(find patches/build -type f -name "patches-${version}.mpp" \
+              ! -name '*-sources.mpp' ! -name '*-javadoc.mpp' 2>/dev/null | sort)
+            echo "::notice::.mpp for ${version} found: ${found[*]:-none}"
+            if (( ${#found[@]} != 1 )); then
+              echo "::error::Released ${TAG} but ${bundle} is missing"
+              echo "::notice::patches/build tree: $(find patches/build -maxdepth 3 2>/dev/null | tr '\n' ' ' | cut -c1-800)"
+              exit 1
+            fi
+            bundle="${found[0]}"
           fi
           size=$(stat -c %s "$bundle")
           echo "path=${bundle}" >> "$GITHUB_OUTPUT"
