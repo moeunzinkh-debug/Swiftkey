@@ -91,7 +91,9 @@ val fixMicrophoneVoiceInputPatch = bytecodePatch(
                 replacementDescriptor = EXTENSION,
                 replacementName = "getPackageInfo",
             ),
-            // 3b) PackageManager.getPackageInfo(String, PackageInfoFlags) (API 33+)
+            // 3b) PackageManager.getPackageInfo(String, PackageInfoFlags) (API 33+)។
+            // មេតូដ​ជំនួស​ប្រកាស​ប៉ារ៉ាម៉ែត្រ​ទីបីជា Object (មិន​ពឹង​ថ្នាក់ API 33 ពេល​ចងក្រង)
+            // — PackageInfoFlags ជា​ប្រភេទ​រង​របស់ Object ទើប ART ទទួល​យក។
             InvokeRedirect(
                 definingClass = PACKAGE_MANAGER,
                 name = "getPackageInfo",
@@ -99,6 +101,7 @@ val fixMicrophoneVoiceInputPatch = bytecodePatch(
                 returnType = PACKAGE_INFO,
                 replacementDescriptor = EXTENSION,
                 replacementName = "getPackageInfo",
+                replacementParameters = listOf("Ljava/lang/String;", "Ljava/lang/Object;"),
             ),
         )
 

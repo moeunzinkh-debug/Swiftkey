@@ -24,7 +24,9 @@ import com.android.tools.smali.dexlib2.iface.reference.MethodReference
  * @param parameters បញ្ជី​ប្រភេទ​ប៉ារ៉ាម៉ែត្រ​ទម្រង់ smali
  * @param returnType ប្រភេទ​តម្លៃ​ត្រឡប់
  * @param replacementDescriptor ប្រភេទ​អ្នក​កាន់​មេតូដ​ជំនួស ("Lapp/morphe/extension/...;")
- * @param replacementName ឈ្មោះ​មេតូដ​ជំនួស (ហត្ថលេខា​ប៉ារ៉ាម៉ែត្រ/តម្លៃ​ត្រឡប់​ត្រូវ​ដូច​គ្នា)
+ * @param replacementName ឈ្មោះ​មេតូដ​ជំនួស (ហត្ថលេខា​ត្រូវ​ទទួល​បញ្ជី register ដូច​គ្នា —
+ *        ប៉ុន្តែ​ប្រភេទ​អាច​ធំ​ជាង​បាន ដូច​ជា​ប្រកាស Object ជំនួស​ប្រភេទ API ថ្មី)
+ * @param replacementParameters បញ្ជី​ប្រភេទ​ប៉ារ៉ាម៉ែត្រ​របស់​មេតូដ​ជំនួស (លំនាំដើម = [parameters])
  */
 internal data class InvokeRedirect(
     val definingClass: String,
@@ -33,6 +35,7 @@ internal data class InvokeRedirect(
     val returnType: String,
     val replacementDescriptor: String,
     val replacementName: String,
+    val replacementParameters: List<String>? = null,
 ) {
     fun matches(reference: MethodReference): Boolean =
         reference.definingClass == definingClass &&
@@ -44,7 +47,8 @@ internal data class InvokeRedirect(
             }
 
     val replacementSmaliDescriptor: String
-        get() = "$replacementDescriptor->$replacementName(${parameters.joinToString("")})$returnType"
+        get() = "$replacementDescriptor->$replacementName(" +
+            "${(replacementParameters ?: parameters).joinToString("")})$returnType"
 }
 
 private val REDIRECTABLE_OPCODES = setOf(

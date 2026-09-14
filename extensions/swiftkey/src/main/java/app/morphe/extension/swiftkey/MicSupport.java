@@ -153,43 +153,87 @@ public final class MicSupport {
         try {
             return manager.getPackageInfo(packageName, flags);
         } catch (PackageManager.NameNotFoundException original) {
-            if (GOOGLE_SEARCH_APP.equals(packageName) || GOOGLE_TTS_APP.equals(packageName)) {
-                String substitute = defaultRecognizerPackage(manager);
-                if (substitute != null && !substitute.equals(packageName)) {
-                    try {
-                        return manager.getPackageInfo(substitute, flags);
-                    } catch (Throwable ignored) {
-                        // បោះ​កំហុស​ដើម​វិញ។
-                    }
-                }
-            }
-            throw original;
+            return handleGooglePackageMissing(manager, packageName, original,
+                pkg -> manager.getPackageInfo(pkg, flags));
         }
     }
 
     /**
      * ឆ្លាស់​នៃ​ទម្រង់ Android 13+ {@code getPackageInfo(String, PackageInfoFlags)}។
-     * មេតូដ​នេះ​ត្រូវ​បាន​ហៅ​តែ​លើ​ឧបករណ៍ API 33+ (ដែល​មេតូដ​មាន​ពិត)ប៉ុណ្ណោះ។
+     *
+     * <p>ប្រភេទ​ប៉ារ៉ាម៉ែត្រ​ប្រកាស​ជា {@link Object} ដើម្បី​កុំ​ឲ្យ​បរិស្ថាន​ចងក្រង extension
+     * ពឹង​ថ្នាក់ PackageInfoFlags ដែល​មាន​តែ​ក្នុង API 33+ (នៅ​ពេល​រត់ ART ផ្ទៀងផ្ទាត់​
+     * ប៉ារ៉ាម៉ែត្រ​ជា​ប្រភេទ​រង​របស់ Object ជានិច្ច)។ ការ​ហៅ​មេតូដ​ថ្មី​ធ្វើ​តាម​រយៈ
+     * reflection; មេតូដ​នេះ​ត្រូវ​បាន​ហៅ​តែ​លើ​ឧបករណ៍ API 33+ ប៉ុណ្ណោះ។
      */
     public static android.content.pm.PackageInfo getPackageInfo(PackageManager manager,
                                                                 String packageName,
-                                                                android.content.pm.PackageInfoFlags flags)
+                                                                Object flags)
             throws PackageManager.NameNotFoundException {
         try {
-            return manager.getPackageInfo(packageName, flags);
-        } catch (PackageManager.NameNotFoundException original) {
-            if (GOOGLE_SEARCH_APP.equals(packageName) || GOOGLE_TTS_APP.equals(packageName)) {
-                String substitute = defaultRecognizerPackage(manager);
-                if (substitute != null && !substitute.equals(packageName)) {
-                    try {
-                        return manager.getPackageInfo(substitute, flags);
-                    } catch (Throwable ignored) {
-                        // បោះ​កំហុស​ដើម​វិញ។
-                    }
+            Class<?> flagsType = Class.forName("android.content.pm.PackageInfoFlags");
+            java.lang.reflect.Method getPackageInfo =
+                PackageManager.class.getMethod("getPackageInfo", String.class, flagsType);
+            Object result = getPackageInfo.invoke(manager, packageName, flags);
+            if (result instanceof android.content.pm.PackageInfo) {
+                return (android.content.pm.PackageInfo) result;
+            }
+            throw new PackageManager.NameNotFoundException(
+                "Unexpected getPackageInfo result for " + packageName);
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof PackageManager.NameNotFoundException) {
+                return handleGooglePackageMissing(
+                    manager,
+                    packageName,
+                    (PackageManager.NameNotFoundException) cause,
+                    pkg -> {
+                        try {
+                            Class<?> flagsType = Class.forName("android.content.pm.PackageInfoFlags");
+                            java.lang.reflect.Method retry =
+                                PackageManager.class.getMethod("getPackageInfo", String.class, flagsType);
+                            return (android.content.pm.PackageInfo) retry.invoke(manager, pkg, flags);
+                        } catch (Throwable ignored) {
+                            return null;
+                        }
+                    });
+            }
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            }
+            throw new RuntimeException(cause != null ? cause : e);
+        } catch (PackageManager.NameNotFoundException e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * តួ​ចែក​រំលែក៖ ពេល​ស្វែងរក​កញ្ចប់ Google មិនឃើញ សាក​ឆ្លើយ​ជំនួស​ដោយ​កញ្ចប់​
+     * ម៉ាស៊ីន​សម្គាល់​សំឡេង​ជាក់ស្តែង; បើ​មិន​មាន​សូម​បោះ​កំហុស​ដើម​វិញ។
+     */
+    private interface PackageInfoLookup {
+        android.content.pm.PackageInfo lookup(String packageName)
+            throws PackageManager.NameNotFoundException;
+    }
+
+    private static android.content.pm.PackageInfo handleGooglePackageMissing(
+            PackageManager manager,
+            String packageName,
+            PackageManager.NameNotFoundException original,
+            PackageInfoLookup retry)
+            throws PackageManager.NameNotFoundException {
+        if (GOOGLE_SEARCH_APP.equals(packageName) || GOOGLE_TTS_APP.equals(packageName)) {
+            String substitute = defaultRecognizerPackage(manager);
+            if (substitute != null && !substitute.equals(packageName)) {
+                android.content.pm.PackageInfo substituted = retry.lookup(substitute);
+                if (substituted != null) {
+                    return substituted;
                 }
             }
-            throw original;
         }
+        throw original;
     }
 
     // ---------------------------------------------------------------------
