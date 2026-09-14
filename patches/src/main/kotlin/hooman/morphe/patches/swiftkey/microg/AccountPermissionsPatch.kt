@@ -81,7 +81,12 @@ val microgAccountPermissionsPatch = bytecodePatch(
             val onCreate = mutableClass.methods.firstOrNull { method ->
                 method.name == "onCreate" &&
                     method.returnType == "V" &&
-                    method.parameterTypes.let { it.size == 1 && it[0].toString() == BUNDLE }
+                    method.parameterTypes.let { it.size == 1 && it[0].toString() == BUNDLE } &&
+                    // មេតូដ abstract/native គ្មាន implementation ទេ៖ ចាក់កូដចូលមិនបាន ហើយ
+                    // ការបកប្រែ smali របស់ patcher នឹងបរាជ័យដោយ "Collection is empty." ព្រោះ
+                    // toInstructions() សន្មត registerCount = 1 ពេល implementation ជា null
+                    // ខណៈ p0 ត្រូវការយ៉ាងតិច 2 register (this + Bundle)។
+                    method.implementation != null
             } ?: return@classDefForEach
 
             // p0 = this (Activity)។ ស្នាម​បន្ថែម​មិន​ប្រើ​ register បន្ថែម​ទេ
