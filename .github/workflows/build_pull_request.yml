@@ -56,6 +56,21 @@ jobs:
             size=$(stat -c %s "$bundle")
             echo "✅ Built bundle: $bundle ($size bytes)"
             echo "- \`$bundle\` — $size bytes" >> "$GITHUB_STEP_SUMMARY"
+            # ត្រួតពិនិត្យខាងក្នុង bundle ពិតៗ៖ កូដដែល compile រួច (classes*.dex ពី buildAndroid)
+            # និង extension .mpe (ពី extensions/) ត្រូវតែមាននៅក្នុង .mpp
+            entries=$(unzip -Z1 "$bundle")
+            dex=$(grep -cE '(^|/)classes[0-9]*\.dex$' <<<"$entries" || true)
+            mpe=$(grep -cE '\.mpe$' <<<"$entries" || true)
+            echo "::notice::${bundle}: $(wc -l <<<"$entries") entries, classes*.dex=${dex}, .mpe=${mpe}, ${size} bytes"
+            echo "::notice::${bundle} contents: $(tr '\n' ' ' <<<"$entries" | cut -c1-600)"
+            if (( dex == 0 )); then
+              echo "::error::${bundle} has no classes*.dex — កូដបំណះដែល compile រួចមិនបានចូល bundle"
+              exit 1
+            fi
+            if (( mpe == 0 )); then
+              echo "::error::${bundle} has no .mpe — extensions/ មិនបានចូល bundle"
+              exit 1
+            fi
           done
 
       # ទុក bundle ឲ្យ reviewer ទាញយកទៅសាកក្នុង Morphe Manager បានភ្លាម
