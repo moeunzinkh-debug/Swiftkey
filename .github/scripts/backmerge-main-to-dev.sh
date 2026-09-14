@@ -24,7 +24,16 @@ git fetch "$remote" "$source_branch" "$target_branch"
 # The workflow can rewrite release metadata and package-lock.json after semantic-release commits.
 # Clear only that known residue before switching branches, and refuse to discard source changes.
 # package-lock.json is not in generated_files, so real lockfile changes still merge into dev below.
-git restore --source=HEAD --staged --worktree -- "${pre_switch_files[@]}"
+# Only restore paths this HEAD actually tracks; `git restore --source=HEAD` aborts otherwise.
+present_pre_switch_files=()
+for path in "${pre_switch_files[@]}"; do
+  if git cat-file -e "HEAD:$path" 2>/dev/null; then
+    present_pre_switch_files+=("$path")
+  fi
+done
+if (( ${#present_pre_switch_files[@]} > 0 )); then
+  git restore --source=HEAD --staged --worktree -- "${present_pre_switch_files[@]}"
+fi
 if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "Back-merge worktree has unexpected tracked changes:" >&2
   git status --short --untracked-files=no >&2
@@ -67,7 +76,24 @@ if (( ${#unexpected_conflicts[@]} > 0 )); then
 fi
 
 # These files describe each branch's own release and must stay on the target branch.
-git restore --source=HEAD --staged --worktree -- "${generated_files[@]}"
+# A content conflict resolves to the target's version. A modify/delete conflict — the
+# target branch does not track the file at all, which is the normal state for a branch
+# that has never published a release — resolves by keeping it deleted, because
+# `git restore` cannot clear unmerged paths ("error: path ... is unmerged").
+for path in "${generated_files[@]}"; do
+  if git ls-files -u --error-unmatch -- "$path" >/dev/null 2>&1; then
+    if git cat-file -e "HEAD:$path" 2>/dev/null; then
+      git checkout --ours -- "$path"
+      git add -- "$path"
+    else
+      git rm --quiet --force --ignore-unmatch -- "$path"
+    fi
+  elif git cat-file -e "HEAD:$path" 2>/dev/null; then
+    git restore --source=HEAD --staged --worktree -- "$path"
+  else
+    git rm --quiet --force --ignore-unmatch -- "$path"
+  fi
+done
 
 mapfile -t unresolved < <(git diff --name-only --diff-filter=U)
 if (( ${#unresolved[@]} > 0 )); then
