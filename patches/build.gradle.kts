@@ -39,15 +39,6 @@ tasks {
         mainClass.set("util.PatchListGeneratorKt")
     }
 
-    register<JavaExec>("diagnoseSmali") {
-        description = "បណ្តោះអាសន្ន៖ សាក InlineSmaliCompiler ជាមួយស្នាម smali របស់បំណះ microG"
-
-        dependsOn(build)
-
-        classpath = sourceSets["main"].runtimeClasspath + patchListGeneratorClasspath
-        mainClass.set("util.DiagnoseSmaliKt")
-    }
-
     // ប្រើ​ដោយ gradle-semantic-release-plugin
     publish {
         dependsOn("generatePatchesList")
