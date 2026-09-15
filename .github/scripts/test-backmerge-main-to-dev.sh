@@ -31,6 +31,8 @@ trap cleanup EXIT
 #   $1 fixture name
 #   $2 "with-metadata"    -> dev keeps its own copy of every generated file (content conflicts)
 #      "without-metadata" -> dev dropped main's release metadata (modify/delete conflicts)
+#      "diverged-source"  -> the above, plus dev rewrote a source file main also edits
+#                            (the MicSupport.java shape that aborted the v1.5.0 back-merge)
 make_fixture() {
   local name="$1" mode="$2"
   local root="$fixture_root/$name"
@@ -73,6 +75,15 @@ make_fixture() {
       printf 'dev readme\n' > "$seed/README.md"
       git -C "$seed" add .
       git -C "$seed" commit --quiet -m "dev drops release metadata"
+      ;;
+    diverged-source)
+      # Same metadata shape, and dev additionally rewrote source.txt — main edits the old
+      # copy below, so the merge reports a genuine content conflict on a source file.
+      git -C "$seed" rm --quiet -- "${main_only_files[@]}"
+      printf 'dev readme\n' > "$seed/README.md"
+      printf 'dev rewrite\n' > "$seed/source.txt"
+      git -C "$seed" add .
+      git -C "$seed" commit --quiet -m "dev drops release metadata and rewrites source"
       ;;
     *)
       echo "Unknown fixture mode: $mode" >&2
@@ -163,5 +174,33 @@ if (
   exit 1
 fi
 grep -q "unexpected source edit" "$worker/source.txt"
+
+# 5) A source file dev rewrote while main edited the old copy, listed in the target-wins
+#    allow-list: the back-merge completes and dev's implementation survives.
+worker="$(make_fixture target-wins diverged-source)"
+(
+  cd "$worker"
+  BACKMERGE_REMOTE=origin BACKMERGE_TARGET_WINS=source.txt bash "$backmerge_script"
+)
+git -C "$worker" fetch --quiet origin main dev
+git -C "$worker" merge-base --is-ancestor origin/main origin/dev
+test "$(git -C "$worker" show origin/dev:package-lock.json)" = "main lockfile"
+test "$(git -C "$worker" show origin/dev:source.txt)" = "dev rewrite"
+
+# 6) The very same conflict WITHOUT the allow-list entry must still abort: an unreviewed
+#    source conflict is a human decision, never something the script resolves by itself.
+worker="$(make_fixture unexpected-source-conflict diverged-source)"
+if (
+  cd "$worker"
+  BACKMERGE_REMOTE=origin bash "$backmerge_script"
+) 2>/dev/null; then
+  echo "Back-merge silently resolved an unlisted source conflict." >&2
+  exit 1
+fi
+git -C "$worker" fetch --quiet origin main dev
+if git -C "$worker" merge-base --is-ancestor origin/main origin/dev; then
+  echo "Aborted back-merge still moved dev." >&2
+  exit 1
+fi
 
 echo "back-merge tests passed."
