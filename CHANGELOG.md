@@ -1,3 +1,9 @@
+## [1.4.4](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.3...v1.4.4) (2026-09-15)
+
+### 🐛 Bug Fixes
+
+* **swiftkey:** stop the dead Vosk model download that 404s for Khmer/Thai ([93e5203](https://github.com/moeunzinkh-debug/Swiftkey/commit/93e520349629d0e9732c3fe602feb080876e8d0d)), closes [12/#13](https://github.com/12/Swiftkey/issues/13)
+
 ## [1.4.3](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.2...v1.4.3) (2026-09-15)
 
 ### 🐛 Bug Fixes

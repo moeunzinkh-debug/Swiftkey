@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-15T13:33:50",
-  "description": "## [1.4.3](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.2...v1.4.3) (2026-09-15)\n\n### 🐛 Bug Fixes\n\n* **simsimi:** avoid smali compile crash in microg account hook ([22dd4ca](https://github.com/moeunzinkh-debug/Swiftkey/commit/22dd4ca1e5efa836d7cdd9395eeb7a8bd811a6a6))",
-  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.4.3/patches-1.4.3.mpp",
+  "created_at": "2026-09-15T13:35:47",
+  "description": "## [1.4.4](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.3...v1.4.4) (2026-09-15)\n\n### 🐛 Bug Fixes\n\n* **swiftkey:** stop the dead Vosk model download that 404s for Khmer/Thai ([93e5203](https://github.com/moeunzinkh-debug/Swiftkey/commit/93e520349629d0e9732c3fe602feb080876e8d0d)), closes [12/#13](https://github.com/12/Swiftkey/issues/13)",
+  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.4.4/patches-1.4.4.mpp",
   "signature_download_url": "",
-  "version": "1.4.3"
+  "version": "1.4.4"
 }
