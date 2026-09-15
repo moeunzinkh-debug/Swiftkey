@@ -164,11 +164,13 @@ if git -C "$worker" cat-file -e "origin/dev:patches-list.json" 2>/dev/null; then
 fi
 
 # 4) A tracked source edit must never be discarded.
+#    GITHUB_ACTIONS= is cleared for the negative cases below: they are *supposed* to fail,
+#    and the script's ::error:: annotation would otherwise paint a green CI run red.
 worker="$(make_fixture dirty without-metadata)"
 printf 'unexpected source edit\n' >> "$worker/source.txt"
 if (
   cd "$worker"
-  BACKMERGE_REMOTE=origin bash "$backmerge_script"
+  GITHUB_ACTIONS= BACKMERGE_REMOTE=origin bash "$backmerge_script"
 ); then
   echo "Back-merge unexpectedly discarded a source change." >&2
   exit 1
@@ -192,7 +194,7 @@ test "$(git -C "$worker" show origin/dev:source.txt)" = "dev rewrite"
 worker="$(make_fixture unexpected-source-conflict diverged-source)"
 if (
   cd "$worker"
-  BACKMERGE_REMOTE=origin bash "$backmerge_script"
+  GITHUB_ACTIONS= BACKMERGE_REMOTE=origin bash "$backmerge_script"
 ) 2>/dev/null; then
   echo "Back-merge silently resolved an unlisted source conflict." >&2
   exit 1
