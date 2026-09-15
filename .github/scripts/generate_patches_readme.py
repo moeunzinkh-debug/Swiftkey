@@ -41,10 +41,18 @@ def pkg_emoji(pkg):
     """Return a standard package emoji regardless of the package name."""
     return "📦"
 
-# Group patches by package; patches with no compatiblePackages are universal.
+# Group patches by app; patches with no compatiblePackages are universal.
 # JSON structure: compatiblePackages is a list of objects with
 # { packageName, name, targets: [{ version, isExperimental, description }] }
-by_pkg = {}   # packageName -> { name, emoji, patches, targets }
+#
+# Grouping key = the app's display name, NOT the package name. A single app can be
+# declared through several Compatibility entries when it ships under multiple package
+# names (Lucky Patcher randomises its package: com.chelpus.lackypatch, ru.byn4ik.lp,
+# com.android.vending.billing.InAppBillingService.LUCK). Keying by package rendered one
+# near-identical dropdown per variant, which reads as duplicated content in the README
+# (and was manually deleted once already, breaking the PATCHES_END marker). Merging by
+# name keeps one section per app, with the union of every variant's supported versions.
+by_pkg = {}   # display name -> { name, emoji, patches, targets, packages }
 universal = {}
 
 for patch in data["patches"]:
@@ -57,16 +65,28 @@ for patch in data["patches"]:
     for pkg_entry in cp:
         pkg  = pkg_entry["packageName"]
         name = pkg_entry.get("name") or pkg  # fall back to package name if no label
-        if pkg not in by_pkg:
-            by_pkg[pkg] = {
-                "name":    name,
-                "emoji":   pkg_emoji(pkg),
-                "patches": {},
-                "targets": pkg_entry.get("targets", []),
+        if name not in by_pkg:
+            by_pkg[name] = {
+                "name":     name,
+                "emoji":    pkg_emoji(pkg),
+                "patches":  {},
+                "targets":  [],
+                "packages": [],
             }
+        group = by_pkg[name]
+        if pkg not in group["packages"]:
+            group["packages"].append(pkg)
+        # Union of the variants' targets, deduplicated by version and keeping the
+        # newest-first order the patch bundle declares them in.
+        seen_versions = {t.get("version") for t in group["targets"]}
+        for target in pkg_entry.get("targets", []):
+            if target.get("version") in seen_versions:
+                continue
+            group["targets"].append(target)
+            seen_versions.add(target.get("version"))
         # Deduplicate patches that appear across multiple packages
-        if patch["name"] not in by_pkg[pkg]["patches"]:
-            by_pkg[pkg]["patches"][patch["name"]] = patch
+        if patch["name"] not in group["patches"]:
+            group["patches"][patch["name"]] = patch
 
 
 def anchor(name):
@@ -151,7 +171,7 @@ def build_content(expanded=False):
     ]
 
     # One spoiler per app, in the order they appear in the JSON
-    for pkg, entry in by_pkg.items():
+    for _app_name, entry in by_pkg.items():
         patches = list(entry["patches"].values())
         label   = f"{entry['emoji']} {entry['name']}"
         lines.append(spoiler(label, len(patches), entry["targets"], patches_table(patches), expanded))

@@ -10,7 +10,7 @@
 ## 🩹 បញ្ជី​បំណះ
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.5.0](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.5.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;20 patches total
+> **[v1.5.0](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.5.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;12 patches total
 <details>
 <summary>📦 Microsoft SwiftKey&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -53,8 +53,8 @@
 
 **🎯 Supported versions:**
 
-| 11.3.9 | 11.2.5 | 10.8.9 | 10.8.8 | 10.8.5 | 10.7.9 | 10.6.5 | 10.5.2 | 10.2.1 | 9.9.9 | 9.5.5 | 8.9.8 | 8.0.0 | 7.5.0 |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 12.10.8 | 11.3.9 | 11.2.5 | 10.8.9 | 10.8.8 | 10.8.5 | 10.7.9 | 10.6.5 | 10.5.2 | 10.2.1 | 9.9.9 | 9.5.5 | 8.9.8 | 8.0.0 | 7.5.0 |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
@@ -64,6 +64,8 @@
 | [Unlock VIP / Pro / Premium / Membership (Lucky Patcher)](#unlock-vip-pro-premium-membership-lucky-patcher) | All-in-one unlock for VIP, Pro, Premium, Membership via Lucky Patcher style. Forces all VIP/Pro/Premium/Membership boolean checks to true, levels to 1, and bypasses billing/license checks. Includes APK Protection: backup/rollback, DEX validation, system class guard, 50 patches/class limit. Supports ALL versions via generic scanning — no hard fingerprint, soft-fail safe. Tag: Lucky Patcher. |  |
 
 </details>
+
+<!-- PATCHES_END -->
 
 ## 📜 អាជ្ញាប័ណ្ណ និង​សម្គាល់​ស្នាដៃ
 
