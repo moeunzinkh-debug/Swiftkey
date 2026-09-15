@@ -1,5 +1,9 @@
 import com.android.build.api.dsl.ApplicationExtension
 
+extension {
+    name = "extensions/simsimi.mpe"
+}
+
 configure<ApplicationExtension> {
     namespace = "app.morphe.extension.simsimi"
     compileSdk = 36
