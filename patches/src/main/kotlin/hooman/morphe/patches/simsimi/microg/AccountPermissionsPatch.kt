@@ -1,8 +1,14 @@
 package hooman.morphe.patches.simsimi.microg
 
-import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import com.android.tools.smali.dexlib2.AccessFlags
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction35c
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction3rc
+import com.android.tools.smali.dexlib2.iface.Method
+import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
 import hooman.morphe.patches.simsimi.simsimiCompatibility
 import hooman.morphe.patches.simsimi.support.simsimiSupportManifestPatch
 
@@ -21,6 +27,17 @@ private val LIBRARY_PREFIXES = arrayOf(
     "Ldalvik/",
     "Lapp/morphe/",
 )
+
+private fun parameterRegisterCount(method: Method): Int {
+    val parameterRegisters = method.parameterTypes.sumOf { parameterType ->
+        when (parameterType.toString()) {
+            "J", "D" -> 2
+            else -> 1
+        }
+    }
+    val instanceRegister = if (AccessFlags.STATIC.isSet(method.accessFlags)) 0 else 1
+    return parameterRegisters + instanceRegister
+}
 
 @Suppress("unused")
 val microgAccountPermissionsPatch = bytecodePatch(
@@ -49,6 +66,13 @@ val microgAccountPermissionsPatch = bytecodePatch(
             return false
         }
 
+        val ensureAccountPermissions = ImmutableMethodReference(
+            EXTENSION,
+            "ensureAccountPermissions",
+            listOf(ACTIVITY),
+            "V",
+        )
+
         var hookedActivities = 0
 
         classDefForEach { classDef ->
@@ -64,9 +88,44 @@ val microgAccountPermissionsPatch = bytecodePatch(
                     method.implementation != null
             } ?: return@classDefForEach
 
-            onCreate.addInstructions(
+            val implementation = onCreate.implementation as? MutableMethodImplementation
+                ?: return@classDefForEach
+            val parameterRegisters = parameterRegisterCount(onCreate)
+            val registerCount = implementation.registerCount
+            if (registerCount < parameterRegisters) {
+                println(
+                    "[MicroGAccountPermissions][SimSimi] Skipping $type->onCreate(Bundle): " +
+                        "registerCount=$registerCount < parameterRegisters=$parameterRegisters",
+                )
+                return@classDefForEach
+            }
+
+            val thisRegister = registerCount - parameterRegisters
+            // Avoid InlineSmaliCompiler here: on some SimSimi/Morphe combinations the one-line
+            // `invoke-static {p0}, ...` compilation aborts with "Collection is empty." even though
+            // the target method is otherwise hookable. Building the invoke directly is equivalent
+            // bytecode-wise and sidesteps the brittle smali-template path entirely.
+            implementation.addInstruction(
                 0,
-                "invoke-static {p0}, $EXTENSION->ensureAccountPermissions(Landroid/app/Activity;)V",
+                if (thisRegister <= 15) {
+                    BuilderInstruction35c(
+                        Opcode.INVOKE_STATIC,
+                        1,
+                        thisRegister,
+                        0,
+                        0,
+                        0,
+                        0,
+                        ensureAccountPermissions,
+                    )
+                } else {
+                    BuilderInstruction3rc(
+                        Opcode.INVOKE_STATIC_RANGE,
+                        thisRegister,
+                        1,
+                        ensureAccountPermissions,
+                    )
+                },
             )
             hookedActivities++
         }
