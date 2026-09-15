@@ -10,7 +10,7 @@
 ## 🩹 បញ្ជី​បំណះ
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.4.1](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.4.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;8 patches total
+> **[v1.4.2](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.4.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;8 patches total
 <details>
 <summary>📦 Microsoft SwiftKey&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>

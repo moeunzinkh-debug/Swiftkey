@@ -1,3 +1,9 @@
+## [1.4.2](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.1...v1.4.2) (2026-09-15)
+
+### 🐛 Bug Fixes
+
+* trigger release to test back-merge after manual fix ([bf9126e](https://github.com/moeunzinkh-debug/Swiftkey/commit/bf9126eba2b624f50e7e0461caf47c4ed964d992))
+
 ## [1.4.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.0...v1.4.1) (2026-09-15)
 
 ### 🐛 Bug Fixes
