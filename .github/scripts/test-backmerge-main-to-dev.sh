@@ -4,13 +4,16 @@ set -euo pipefail
 readonly script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly backmerge_script="$script_dir/backmerge-main-to-dev.sh"
 readonly fixture_root="$(mktemp -d)"
-readonly remote="$fixture_root/remote.git"
-readonly seed="$fixture_root/seed"
-readonly worker="$fixture_root/worker"
-readonly dirty_worker="$fixture_root/dirty-worker"
 readonly -a generated_files=(
   "CHANGELOG.md"
   "README.md"
+  "gradle.properties"
+  "patches-bundle.json"
+  "patches-list.json"
+)
+# Files that dev does not track in the real repository (they are main's release metadata).
+readonly -a main_only_files=(
+  "CHANGELOG.md"
   "gradle.properties"
   "patches-bundle.json"
   "patches-list.json"
@@ -24,53 +27,141 @@ cleanup() {
 }
 trap cleanup EXIT
 
-git init --bare --quiet "$remote"
-git init --quiet "$seed"
-git -C "$seed" config user.name "Back-merge test"
-git -C "$seed" config user.email "backmerge-test@example.invalid"
+# Build a remote/seed/worker fixture and print the worker path.
+#   $1 fixture name
+#   $2 "with-metadata"    -> dev keeps its own copy of every generated file (content conflicts)
+#      "without-metadata" -> dev dropped main's release metadata (modify/delete conflicts)
+make_fixture() {
+  local name="$1" mode="$2"
+  local root="$fixture_root/$name"
+  local remote="$root/remote.git"
+  local seed="$root/seed"
+  local path
 
-for path in "${generated_files[@]}"; do
-  printf 'dev metadata\n' > "$seed/$path"
-done
-printf 'dev lockfile\n' > "$seed/package-lock.json"
-printf 'shared\n' > "$seed/source.txt"
-git -C "$seed" add .
-git -C "$seed" commit --quiet -m "initial dev"
-git -C "$seed" branch -M dev
-git -C "$seed" remote add origin "$remote"
-git -C "$seed" push --quiet --set-upstream origin dev
+  mkdir -p "$root"
+  git init --bare --quiet "$remote"
+  git init --quiet "$seed"
+  git -C "$seed" config user.name "Back-merge test"
+  git -C "$seed" config user.email "backmerge-test@example.invalid"
 
-git -C "$seed" switch --quiet -c main
-printf 'main source change\n' >> "$seed/source.txt"
-for path in "${generated_files[@]}"; do
-  printf 'main metadata\n' > "$seed/$path"
-done
-printf 'main lockfile\n' > "$seed/package-lock.json"
-git -C "$seed" add .
-git -C "$seed" commit --quiet -m "main release"
-git -C "$seed" push --quiet --set-upstream origin main
+  # Merge base: every generated file exists, exactly like the real repo at v1.0.0.
+  for path in "${generated_files[@]}"; do
+    printf 'base metadata\n' > "$seed/$path"
+  done
+  printf 'base lockfile\n' > "$seed/package-lock.json"
+  printf 'shared\n' > "$seed/source.txt"
+  git -C "$seed" add .
+  git -C "$seed" commit --quiet -m "initial"
+  local base
+  base="$(git -C "$seed" rev-parse HEAD)"
 
-git clone --quiet --branch main "$remote" "$worker"
+  # dev side
+  git -C "$seed" branch -M dev
+  git -C "$seed" remote add origin "$remote"
+  case "$mode" in
+    with-metadata)
+      for path in "${generated_files[@]}"; do
+        printf 'dev metadata\n' > "$seed/$path"
+      done
+      git -C "$seed" add .
+      git -C "$seed" commit --quiet -m "dev keeps its own metadata"
+      ;;
+    without-metadata)
+      # dev intentionally does not carry main's release metadata; this is what makes the
+      # merge report "modify/delete" conflicts for those files.
+      git -C "$seed" rm --quiet -- "${main_only_files[@]}"
+      printf 'dev readme\n' > "$seed/README.md"
+      git -C "$seed" add .
+      git -C "$seed" commit --quiet -m "dev drops release metadata"
+      ;;
+    *)
+      echo "Unknown fixture mode: $mode" >&2
+      return 2
+      ;;
+  esac
+  git -C "$seed" push --quiet --set-upstream origin dev
+
+  # main side: release metadata rewritten by semantic-release, plus a real source change.
+  git -C "$seed" switch --quiet -c main "$base"
+  printf 'main source change\n' >> "$seed/source.txt"
+  for path in "${generated_files[@]}"; do
+    printf 'main metadata\n' > "$seed/$path"
+  done
+  printf 'main lockfile\n' > "$seed/package-lock.json"
+  git -C "$seed" add .
+  git -C "$seed" commit --quiet -m "main release"
+  git -C "$seed" push --quiet --set-upstream origin main
+
+  git clone --quiet --branch main "$remote" "$root/worker"
+  printf '%s\n' "$root/worker"
+}
+
+# Assertions shared by every successful back-merge: main is merged in, real changes land,
+# and lockfile follows main.
+assert_merged() {
+  local worker="$1"
+  git -C "$worker" fetch --quiet origin main dev
+  git -C "$worker" merge-base --is-ancestor origin/main origin/dev
+  test "$(git -C "$worker" show origin/dev:package-lock.json)" = "main lockfile"
+  test "$(git -C "$worker" show origin/dev:source.txt | tail -n 1)" = "main source change"
+}
+
+# 1) dev keeps its own generated files -> content conflicts must resolve to dev's version.
+worker="$(make_fixture with-metadata with-metadata)"
 printf 'post-release regeneration\n' > "$worker/patches-list.json"
 printf 'npm install residue\n' > "$worker/package-lock.json"
 (
   cd "$worker"
   BACKMERGE_REMOTE=origin bash "$backmerge_script"
 )
+assert_merged "$worker"
+for path in "${generated_files[@]}"; do
+  test "$(git -C "$worker" show "origin/dev:$path")" = "dev metadata"
+done
 
-git -C "$worker" fetch --quiet origin main dev
-git -C "$worker" merge-base --is-ancestor origin/main origin/dev
-test "$(git -C "$worker" show origin/dev:patches-list.json)" = "dev metadata"
-test "$(git -C "$worker" show origin/dev:package-lock.json)" = "main lockfile"
-test "$(git -C "$worker" show origin/dev:source.txt | tail -n 1)" = "main source change"
+# 2) The real repository shape: dev does not track CHANGELOG.md, gradle.properties,
+#    patches-bundle.json or patches-list.json, so main's update conflicts as modify/delete.
+worker="$(make_fixture without-metadata without-metadata)"
+(
+  cd "$worker"
+  BACKMERGE_REMOTE=origin bash "$backmerge_script"
+)
+assert_merged "$worker"
+test "$(git -C "$worker" show origin/dev:README.md)" = "dev readme"
+for path in "${main_only_files[@]}"; do
+  if git -C "$worker" cat-file -e "origin/dev:$path" 2>/dev/null; then
+    echo "Back-merge leaked main-only file $path into dev." >&2
+    exit 1
+  fi
+  if [[ -e "$worker/$path" ]]; then
+    echo "Back-merge left main-only file $path in the dev worktree." >&2
+    exit 1
+  fi
+done
 
-git clone --quiet --branch main "$remote" "$dirty_worker"
-printf 'unexpected source edit\n' >> "$dirty_worker/source.txt"
+# 3) Same shape, but the worker still holds untracked build output (generatePatchesList on dev).
+worker="$(make_fixture untracked-residue without-metadata)"
+printf 'untracked generated output\n' > "$worker/patches-list.json"
+(
+  cd "$worker"
+  BACKMERGE_REMOTE=origin bash "$backmerge_script"
+)
+assert_merged "$worker"
+if git -C "$worker" cat-file -e "origin/dev:patches-list.json" 2>/dev/null; then
+  echo "Untracked residue was committed into dev." >&2
+  exit 1
+fi
+
+# 4) A tracked source edit must never be discarded.
+worker="$(make_fixture dirty without-metadata)"
+printf 'unexpected source edit\n' >> "$worker/source.txt"
 if (
-  cd "$dirty_worker"
+  cd "$worker"
   BACKMERGE_REMOTE=origin bash "$backmerge_script"
 ); then
   echo "Back-merge unexpectedly discarded a source change." >&2
   exit 1
 fi
-grep -q "unexpected source edit" "$dirty_worker/source.txt"
+grep -q "unexpected source edit" "$worker/source.txt"
+
+echo "back-merge tests passed."

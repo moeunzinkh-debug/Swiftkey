@@ -26,6 +26,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      # តេស្ដ back-merge មុនចេញ release — បើស្គ្រីបខូច កុំឲ្យមាន release ដែល
+      # ចេញផ្សាយរួចតែមិនអាច back-merge ទៅ dev បាន
+      - name: Test back-merge script
+        run: bash .github/scripts/test-backmerge-main-to-dev.sh
+
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -147,3 +152,11 @@ jobs:
           path: ${{ steps.bundle.outputs.path }}
           if-no-files-found: error
           retention-days: 30
+
+      # ៥) back-merge main → dev ដាក់ជា step ចុងក្រោយ (មិនមែនជា semantic-release plugin)
+      #    ដូច្នេះបើវាបរាជ័យ ក៏ release + .mpp + attestation + artifact បានចេញរួចហើយដែរ។
+      #    មុននេះវាជា plugin `success` របស់ semantic-release ដូច្នេះ conflict នៅ dev
+      #    ធ្វើឲ្យ step "Release" បរាជ័យ ហើយ Attest/Upload .mpp ត្រូវរំលងទាំងស្រុង។
+      - name: Back-merge main into dev
+        if: steps.release.outputs.new_release_published == 'true' && github.ref_name == 'main'
+        run: bash .github/scripts/backmerge-main-to-dev.sh
