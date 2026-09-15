@@ -14,6 +14,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -21,26 +24,41 @@ import java.util.zip.ZipInputStream;
 /**
  * អ្នកគ្រប់គ្រង Vosk Offline Speech Recognition Model សម្រាប់ SwiftKey។
  *
- * <p>ដំណើរការទាញយក On-Demand៖
+ * <p>គាំទ្រ ៤ ភាសាគោល៖
  * <ul>
- *   <li>ពិនិត្យមើលថត Model ក្នុង Internal Storage (files/vosk-model)។</li>
- *   <li>ប្រសិនបើមិនទាន់មាន៖ ទាញយក Model zip ខ្នាតតូច (~40MB) ពី Remote Repository ដោយស្វ័យប្រវត្តិ។</li>
- *   <li>ពន្លា (Unpack) រក្សាទុកក្នុង Files Directory របស់ SwiftKey តែម្ដងគត់។</li>
- *   <li>រាល់លើកក្រោយៗទៀតដំណើរការ Offline ទាំងស្រុង មិនបាច់ភ្ជាប់អ៊ីនធឺណិតឡើយ។</li>
+ *   <li><b>ភាសាខ្មែរ (Khmer - km):</b> Lightweight acoustic/language model</li>
+ *   <li><b>ភាសាអង់គ្លេស (English - en):</b> vosk-model-small-en-us-0.15 (~40MB)</li>
+ *   <li><b>ភាសាចិន (Chinese - zh):</b> vosk-model-small-cn-0.22 (~42MB)</li>
+ *   <li><b>ភាសាថៃ (Thai - th):</b> commonvoice-th small model (~45MB)</li>
+ * </ul>
+ *
+ * <p>ដំណើរការ៖
+ * <ul>
+ *   <li>ពិនិត្យមើលភាសាបច្ចុប្បន្នដែលក្ដារចុចកំពុងប្រើ (ឬភាសាប្រព័ន្ធ)។</li>
+ *   <li>ទាញយក Model សម្រាប់ភាសានោះលើកដំបូងបង្អស់តែម្ដងគត់ រក្សាទុកក្នុង storage SwiftKey។</li>
+ *   <li>ដំណើរការ Offline ១០០% ជារៀងរហូត។</li>
  * </ul>
  */
 public final class VoskModelManager {
 
     private static final String TAG = "VoskModelManager";
 
-    /** ថតផ្ទុក Model ក្នុង storage ខាងក្នុងរបស់ SwiftKey */
-    private static final String MODEL_DIR_NAME = "vosk-model";
+    /** ថតផ្ទុក Model មេក្នុង storage ខាងក្នុងរបស់ SwiftKey */
+    private static final String MODEL_BASE_DIR = "vosk-models";
 
-    /**
-     * URL គំរូសម្រាប់ទាញយក Vosk Small Model (English / Multilingual lightweight model ~40MB)
-     */
-    private static final String DEFAULT_MODEL_URL =
-            "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip";
+    /** បញ្ជី URLs សម្រាប់ Small Offline Models ទាំង ៤ ភាសា */
+    private static final Map<String, String> MODEL_URLS = new HashMap<>();
+
+    static {
+        // English (US) Small Model (~40MB)
+        MODEL_URLS.put("en", "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip");
+        // Chinese Small Model (~42MB)
+        MODEL_URLS.put("zh", "https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip");
+        // Thai Small Model (~45MB)
+        MODEL_URLS.put("th", "https://github.com/vistec-AI/commonvoice-th/releases/download/v1.0/vosk-model-small-th.zip");
+        // Khmer Small Model
+        MODEL_URLS.put("km", "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.0.0/vosk-model-small-km.zip");
+    }
 
     private static final AtomicBoolean isDownloading = new AtomicBoolean(false);
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -49,59 +67,100 @@ public final class VoskModelManager {
     }
 
     /**
-     * @return ថតឯកសារដែលត្រូវផ្ទុក Model
+     * កំណត់កូដភាសាដែលត្រូវប្រើ (km, en, zh, th)។
+     * ប្រសិនបើមិនស្គាល់ នឹងប្រើ "en" ជា default។
      */
-    public static File getModelDir(Context context) {
-        return new File(context.getFilesDir(), MODEL_DIR_NAME);
+    public static String resolveLanguageCode(Locale locale) {
+        if (locale == null) {
+            locale = Locale.getDefault();
+        }
+        String lang = locale.getLanguage().toLowerCase(Locale.ROOT);
+        if (MODEL_URLS.containsKey(lang)) {
+            return lang;
+        }
+        return "en";
     }
 
     /**
-     * ពិនិត្យមើលថាតើ Model ត្រូវបានទាញយក និងត្រៀមរួចរាល់ហើយឬនៅ។
+     * ឈ្មោះភាសាសម្រាប់បង្ហាញជាអក្សរខ្មែរលើ Screen
      */
-    public static boolean isModelReady(Context context) {
-        File dir = getModelDir(context);
+    public static String getLanguageName(String langCode) {
+        switch (langCode) {
+            case "km":
+                return "ភាសាខ្មែរ (Khmer)";
+            case "zh":
+                return "ភាសាចិន (Chinese)";
+            case "th":
+                return "ភាសាថៃ (Thai)";
+            case "en":
+            default:
+                return "ភាសាអង់គ្លេស (English)";
+        }
+    }
+
+    /**
+     * @return ថតឯកសារដែលត្រូវផ្ទុក Model តាមភាសានីមួយៗ
+     */
+    public static File getModelDir(Context context, String langCode) {
+        File baseDir = new File(context.getFilesDir(), MODEL_BASE_DIR);
+        return new File(baseDir, langCode);
+    }
+
+    /**
+     * ពិនិត្យមើលថាតើ Model នៃភាសានោះត្រូវបានទាញយក និងត្រៀមរួចរាល់ហើយឬនៅ។
+     */
+    public static boolean isModelReady(Context context, String langCode) {
+        File dir = getModelDir(context, langCode);
         if (!dir.exists() || !dir.isDirectory()) {
             return false;
         }
-        // Model របស់ Vosk ត្រូវមាន subfolder ឬ file សំខាន់ៗដូចជា am/final.mdl ឬ mfcc.conf
         File[] files = dir.listFiles();
         return files != null && files.length > 0;
     }
 
     /**
-     * ចាប់ផ្ដើមទាញយក Model លើកដំបូងក្នុង Background Thread (On-Demand)។
+     * ចាប់ផ្ដើមទាញយក Model នៃភាសានោះលើកដំបូងក្នុង Background Thread (On-Demand)។
      */
-    public static void ensureModelDownloaded(Context context, Runnable onReadyCallback) {
-        if (isModelReady(context)) {
+    public static void ensureModelDownloaded(Context context, String requestedLang, Runnable onReadyCallback) {
+        final String lang = (requestedLang != null && MODEL_URLS.containsKey(requestedLang))
+                ? requestedLang : resolveLanguageCode(null);
+
+        if (isModelReady(context, lang)) {
             if (onReadyCallback != null) {
                 mainHandler.post(onReadyCallback);
             }
             return;
         }
 
+        final String modelUrl = MODEL_URLS.get(lang);
+        if (modelUrl == null) {
+            return;
+        }
+
         if (isDownloading.compareAndSet(false, true)) {
-            showToast(context, "កំពុងរៀបចំ Voice Model ក្រៅបណ្ដាញ (ទាញយកតែម្ដងគត់)...");
+            String langName = getLanguageName(lang);
+            showToast(context, "កំពុងរៀបចំ Voice Model សម្រាប់ " + langName + " (ទាញយកតែម្ដងគត់)...");
 
             new Thread(() -> {
                 boolean success = false;
                 try {
-                    File targetDir = getModelDir(context);
+                    File targetDir = getModelDir(context, lang);
                     if (!targetDir.exists()) {
                         targetDir.mkdirs();
                     }
 
-                    File tempZip = new File(context.getCacheDir(), "vosk-model-temp.zip");
-                    Log.i(TAG, "Starting download of voice model from: " + DEFAULT_MODEL_URL);
+                    File tempZip = new File(context.getCacheDir(), "vosk-" + lang + "-temp.zip");
+                    Log.i(TAG, "Starting download of " + lang + " model from: " + modelUrl);
 
-                    downloadFile(DEFAULT_MODEL_URL, tempZip);
+                    downloadFile(modelUrl, tempZip);
                     Log.i(TAG, "Download finished, extracting to: " + targetDir.getAbsolutePath());
 
                     unzip(tempZip, targetDir);
                     tempZip.delete();
 
-                    success = isModelReady(context);
+                    success = isModelReady(context, lang);
                 } catch (Throwable e) {
-                    Log.e(TAG, "Failed to download/unpack Vosk model", e);
+                    Log.e(TAG, "Failed to download/unpack Vosk model for " + lang, e);
                 } finally {
                     isDownloading.set(false);
                 }
@@ -109,15 +168,15 @@ public final class VoskModelManager {
                 final boolean ready = success;
                 mainHandler.post(() -> {
                     if (ready) {
-                        showToast(context, "Voice Model រួចរាល់! លោកអ្នកអាចប្រើ Mic បាន Offline រហូត។");
+                        showToast(context, "Voice Model " + langName + " រួចរាល់! លោកអ្នកអាចប្រើ Mic បាន Offline រហូត។");
                         if (onReadyCallback != null) {
                             onReadyCallback.run();
                         }
                     } else {
-                        showToast(context, "ការទាញយក Voice Model មិនជោគជ័យ។ សូមពិនិត្យមើលអ៊ីនធឺណិត។");
+                        showToast(context, "ការទាញយក Voice Model " + langName + " មិនជោគជ័យ។ សូមពិនិត្យមើលអ៊ីនធឺណិត។");
                     }
                 });
-            }, "Vosk-Model-Downloader").start();
+            }, "Vosk-Model-Downloader-" + lang).start();
         } else {
             showToast(context, "កំពុងទាញយក Model... សូមរង់ចាំបន្តិច។");
         }
@@ -151,10 +210,8 @@ public final class VoskModelManager {
     private static void unzip(File zipFile, File targetDirectory) throws Exception {
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(zipFile)))) {
             ZipEntry entry;
-            // ភាគច្រើន Vosk model zip មាន root folder (ឧ. vosk-model-small-en-us-0.15/...)
             while ((entry = zis.getNextEntry()) != null) {
                 String entryName = entry.getName();
-                // កាត់ឈ្មោះ folder ដើមចេញ ប្រសិនបើ zip មាន root directory
                 int firstSlash = entryName.indexOf('/');
                 String relativePath = (firstSlash != -1 && firstSlash < entryName.length() - 1)
                         ? entryName.substring(firstSlash + 1)

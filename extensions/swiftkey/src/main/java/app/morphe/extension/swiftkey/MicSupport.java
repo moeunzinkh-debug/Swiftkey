@@ -118,7 +118,7 @@ public final class MicSupport {
 
             // ពិនិត្យមើល និងរៀបចំ Vosk Offline Model ប្រសិនបើគ្មានម៉ាស៊ីនសំឡេងលើប្រព័ន្ធ
             if (!hasRecognitionService(app)) {
-                VoskModelManager.ensureModelDownloaded(app, null);
+                VoskModelManager.ensureModelDownloaded(app, null, null);
             }
 
             return SpeechRecognizer.createSpeechRecognizer(app);
