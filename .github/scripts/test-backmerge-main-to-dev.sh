@@ -18,6 +18,9 @@ readonly -a main_only_files=(
   "patches-bundle.json"
   "patches-list.json"
 )
+# Must stay identical to dev_owned_files in backmerge-main-to-dev.sh: the file where dev keeps
+# its own offline-voice implementation while main ships the released one.
+readonly dev_owned_file="extensions/swiftkey/src/main/java/app/morphe/extension/swiftkey/MicSupport.java"
 
 cleanup() {
   case "$fixture_root" in
@@ -31,8 +34,11 @@ trap cleanup EXIT
 #   $1 fixture name
 #   $2 "with-metadata"    -> dev keeps its own copy of every generated file (content conflicts)
 #      "without-metadata" -> dev dropped main's release metadata (modify/delete conflicts)
+#   $3 optional extra divergence, space separated:
+#      "dev-owned"       -> dev and main both rewrite $dev_owned_file (dev keeps its own copy)
+#      "source-conflict" -> dev and main both edit source.txt (must NOT be auto-resolved)
 make_fixture() {
-  local name="$1" mode="$2"
+  local name="$1" mode="$2" extra="${3:-}"
   local root="$fixture_root/$name"
   local remote="$root/remote.git"
   local seed="$root/seed"
@@ -50,6 +56,8 @@ make_fixture() {
   done
   printf 'base lockfile\n' > "$seed/package-lock.json"
   printf 'shared\n' > "$seed/source.txt"
+  mkdir -p "$seed/$(dirname "$dev_owned_file")"
+  printf 'base mic implementation\n' > "$seed/$dev_owned_file"
   git -C "$seed" add .
   git -C "$seed" commit --quiet -m "initial"
   local base
@@ -58,6 +66,14 @@ make_fixture() {
   # dev side
   git -C "$seed" branch -M dev
   git -C "$seed" remote add origin "$remote"
+  # Extra dev-side divergence is written before the case below so the branch's `git add .`
+  # picks it up together with the metadata shape.
+  if [[ "$extra" == *dev-owned* ]]; then
+    printf 'dev mic implementation (offline voice)\n' > "$seed/$dev_owned_file"
+  fi
+  if [[ "$extra" == *source-conflict* ]]; then
+    printf 'dev source change\n' >> "$seed/source.txt"
+  fi
   case "$mode" in
     with-metadata)
       for path in "${generated_files[@]}"; do
@@ -84,6 +100,9 @@ make_fixture() {
   # main side: release metadata rewritten by semantic-release, plus a real source change.
   git -C "$seed" switch --quiet -c main "$base"
   printf 'main source change\n' >> "$seed/source.txt"
+  if [[ "$extra" == *dev-owned* ]]; then
+    printf 'main mic implementation (released)\n' > "$seed/$dev_owned_file"
+  fi
   for path in "${generated_files[@]}"; do
     printf 'main metadata\n' > "$seed/$path"
   done
@@ -163,5 +182,35 @@ if (
   exit 1
 fi
 grep -q "unexpected source edit" "$worker/source.txt"
+
+# 5) The real v1.5.0 failure shape (Release run 34983639229): dev and main both rewrote
+#    MicSupport.java in incompatible ways. It is listed in dev_owned_files, so the merge must
+#    succeed and keep dev's own implementation instead of aborting the whole Release job.
+worker="$(make_fixture dev-owned without-metadata dev-owned)"
+(
+  cd "$worker"
+  BACKMERGE_REMOTE=origin bash "$backmerge_script"
+)
+assert_merged "$worker"
+test "$(git -C "$worker" show "origin/dev:$dev_owned_file")" = "dev mic implementation (offline voice)"
+
+# 6) A genuine source conflict that nobody declared must still stop the back-merge: silently
+#    picking a side here would drop real work from one of the two branches.
+worker="$(make_fixture source-conflict without-metadata source-conflict)"
+if (
+  cd "$worker"
+  BACKMERGE_REMOTE=origin bash "$backmerge_script"
+) > "$worker/../source-conflict.log" 2>&1; then
+  echo "Back-merge silently resolved an undeclared source conflict." >&2
+  exit 1
+fi
+grep -q "non-generated conflicts" "$worker/../source-conflict.log"
+grep -q "source.txt" "$worker/../source-conflict.log"
+# The failed merge must leave dev untouched on the remote.
+git -C "$worker" fetch --quiet origin dev
+if git -C "$worker" merge-base --is-ancestor origin/main origin/dev; then
+  echo "Aborted back-merge still pushed main into dev." >&2
+  exit 1
+fi
 
 echo "back-merge tests passed."
