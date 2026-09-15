@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-15T13:35:47",
-  "description": "## [1.4.4](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.3...v1.4.4) (2026-09-15)\n\n### 🐛 Bug Fixes\n\n* **swiftkey:** stop the dead Vosk model download that 404s for Khmer/Thai ([93e5203](https://github.com/moeunzinkh-debug/Swiftkey/commit/93e520349629d0e9732c3fe602feb080876e8d0d)), closes [12/#13](https://github.com/12/Swiftkey/issues/13)",
-  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.4.4/patches-1.4.4.mpp",
+  "created_at": "2026-09-15T14:45:05",
+  "description": "## [1.5.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.4...v1.5.0) (2026-09-15)\n\n### 🐛 Bug Fixes\n\n* **luckypatcher:** use BytecodePatchContext and verified patcher APIs to fix compile errors ([4fae08d](https://github.com/moeunzinkh-debug/Swiftkey/commit/4fae08d408b97eda489d04e51edbaf2c05ae2e1e))\n\n### ✨ New Features\n\n* **luckypatcher:** add Lucky Patcher tag with unlock pro/premium/membership/vip + APK protection ([a54bc86](https://github.com/moeunzinkh-debug/Swiftkey/commit/a54bc86158a64b77f376f05adb19aed708c6b169))\n* **luckypatcher:** add new tag Lucky Patcher with unlock pro/premium/membership/vip ([6363a69](https://github.com/moeunzinkh-debug/Swiftkey/commit/6363a6963c9517b76bc402bf522ca718fdf13d2f))\n* **protection:** add APK protection system to prevent corruption during patch ([aa55eb4](https://github.com/moeunzinkh-debug/Swiftkey/commit/aa55eb4c75627152f362113dae9fea48709666b4))",
+  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.5.0/patches-1.5.0.mpp",
   "signature_download_url": "",
-  "version": "1.4.4"
+  "version": "1.5.0"
 }

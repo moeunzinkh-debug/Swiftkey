@@ -1,3 +1,15 @@
+## [1.5.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.4...v1.5.0) (2026-09-15)
+
+### 🐛 Bug Fixes
+
+* **luckypatcher:** use BytecodePatchContext and verified patcher APIs to fix compile errors ([4fae08d](https://github.com/moeunzinkh-debug/Swiftkey/commit/4fae08d408b97eda489d04e51edbaf2c05ae2e1e))
+
+### ✨ New Features
+
+* **luckypatcher:** add Lucky Patcher tag with unlock pro/premium/membership/vip + APK protection ([a54bc86](https://github.com/moeunzinkh-debug/Swiftkey/commit/a54bc86158a64b77f376f05adb19aed708c6b169))
+* **luckypatcher:** add new tag Lucky Patcher with unlock pro/premium/membership/vip ([6363a69](https://github.com/moeunzinkh-debug/Swiftkey/commit/6363a6963c9517b76bc402bf522ca718fdf13d2f))
+* **protection:** add APK protection system to prevent corruption during patch ([aa55eb4](https://github.com/moeunzinkh-debug/Swiftkey/commit/aa55eb4c75627152f362113dae9fea48709666b4))
+
 ## [1.4.4](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.3...v1.4.4) (2026-09-15)
 
 ### 🐛 Bug Fixes
