@@ -22,6 +22,11 @@ internal val luckyPatcherCompatibility = Compatibility(
     // ដាក់កំណែច្រើនដើម្បីបង្ហាញថា support all version
     // តាម Morphe docs គួរដាក់ពីថ្មីទៅចាស់
     targets = listOf(
+        // 12.10.8 (ចេញ 2026-08) ជាកំណែចុងក្រោយពីគេហទំព័រផ្លូវការ luckypatchers.com។
+        // កំណែនេះបន្ថែម "Signature verification killer (by SteweEliteModder)" និង zygisk module
+        // សម្រាប់ Android 16 — ប៉ុន្តែ structure នៃ pro/vip/billing flags នៅដដែល ដូច្នេះ
+        // generic scanning របស់យើងនៅតែដំណើរការ (មិនត្រូវការ fingerprint ថ្មីទេ)។
+        AppTarget("12.10.8"),
         AppTarget("11.3.9"),
         AppTarget("11.2.5"),
         AppTarget("10.8.9"),
@@ -50,9 +55,32 @@ internal val luckyPatcherCompatibilityVariantRu = Compatibility(
     packageName = "ru.byn4ik.lp",
     appIconColor = 0xF7D000,
     targets = listOf(
+        AppTarget("12.10.8"),
         AppTarget("11.3.9"),
         AppTarget("10.8.9"),
         AppTarget("8.0.0"),
+    ),
+)
+
+/**
+ * Variant សម្រាប់កំណែ 12.10.8 ដែលចែកចាយជាក់ស្ដែងនៅឆ្នាំ 2026។
+ *
+ * APK ផ្លូវការរបស់ Lucky Patcher 12.10.8 មិនប្រើ `com.chelpus.lackypatch` ទេ — វាប្រើ
+ * package name ចៃដន្យ `ru.sxbuIDfx.pFSOyagrF` (ចេញពីគេហទំព័រផ្លូវការ និងកញ្ចក់ APK ចម្បងៗ)
+ * ដើម្បីគេចពីការស្កេនរបស់ Play Protect។ Morphe Manager ផ្គូផ្គងបំណះតាម packageName +
+ * versionName ដូច្នេះបើគ្មាន entry នេះទេ អ្នកប្រើដែលជ្រើស APK 12.10.8 នឹងមិនឃើញ
+ * បំណះទាំង 4 របស់យើងសោះ។
+ *
+ * ⚠️ package name នេះប្ដូរតាមការចេញផ្សាយនីមួយៗ — ពេលមានកំណែថ្មី សូមទាញយក packageName
+ * ពី APK ជាក់ស្ដែង (ឧ. `aapt dump badging lucky.apk | grep package`) ហើយបន្ថែម variant ថ្មី
+ * ជំនួសឲ្យការកែ entry នេះ។
+ */
+internal val luckyPatcherCompatibilityVariantInstaller = Compatibility(
+    name = "Lucky Patcher",
+    packageName = "ru.sxbuIDfx.pFSOyagrF",
+    appIconColor = 0xF7D000,
+    targets = listOf(
+        AppTarget("12.10.8"),
     ),
 )
 
