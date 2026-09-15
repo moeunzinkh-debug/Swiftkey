@@ -1,7 +1,0 @@
-{
-  "created_at": "2026-09-15T04:08:01",
-  "description": "## [1.1.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.1.0...v1.1.1) (2026-09-15)\n\n### 🐛 Bug Fixes\n\n* resolve modify/delete conflicts in the main→dev back-merge ([326dcc1](https://github.com/moeunzinkh-debug/Swiftkey/commit/326dcc122ddfe1672ab3db07935e6ddf25b11255))",
-  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.1.1/patches-1.1.1.mpp",
-  "signature_download_url": "",
-  "version": "1.1.1"
-}

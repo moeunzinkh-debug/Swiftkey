@@ -60,6 +60,7 @@ Do not publish a release claiming otherwise.
 
 ## Release state
 
-`patches-bundle.json` still points to the previously published v1.1.1 artifact. It is historical release metadata,
-not an artifact containing these source changes. Let semantic-release create a new version after validation;
-do not overwrite old assets or point users to v1.1.1 as if it contained the new engine.
+The previously published v1.1.1 artifact does not contain these source changes. This branch preserves
+`dev`'s removal of the old `patches-bundle.json` and `CHANGELOG.md`; semantic-release will generate fresh
+release metadata. The source catalogue and Gradle configuration are retained for development and validation.
+Do not overwrite old assets or point users to v1.1.1 as if it contained the new engine.
