@@ -1,0 +1,35 @@
+SwiftKey offline voice — third-party notices
+
+whisper.cpp v1.9.4 / ggml
+Source: https://github.com/ggml-org/whisper.cpp
+Commit: 927cfce34f31707e17f2bff35c349632fb9e2c3a
+The native engine is compiled into libswiftkey_whisper.so.
+Copyright (c) 2023-2026 The ggml authors
+
+Whisper multilingual base model (downloaded separately, not bundled)
+Source: https://github.com/openai/whisper
+Converted model: https://huggingface.co/ggerganov/whisper.cpp
+Model revision: 5359861c739e955e79d9a303bcbc70fb988958b1
+File: ggml-base.bin
+SHA-256: 60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe
+Copyright (c) 2022 OpenAI
+
+Both components are provided under the MIT License:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

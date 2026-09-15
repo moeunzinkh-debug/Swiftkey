@@ -50,3 +50,17 @@ node_modules/
 
 ### VS Code
 .vscode/
+
+### Native voice builds and downloaded speech models
+.cxx/
+.externalNativeBuild/
+*.mpp
+*.mpe
+*.aar
+*.so
+ggml-*.bin
+*.part
+
+### Python regression tests
+__pycache__/
+*.py[cod]

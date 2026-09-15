@@ -1,16 +1,14 @@
-// TODO(ផ្ទាល់ខ្លួន): ប្តូរ​ឲ្យ​ត្រូវ​នឹង group របស់​អ្នក​នៅ gradle.properties ផងដែរ
-group = "io.github.yourusername"
+group = "io.github.moeunzinkhdebug"
 
 patches {
     about {
         // ឈ្មោះ​bundle ដែល​នឹង​បង្ហាញ​ក្នុង Morphe Manager
-        name = "SwiftKey Morphe Patches"
-        description = "Personal Morphe patches for Microsoft SwiftKey Keyboard."
-        // TODO(ផ្ទាល់ខ្លួន): ដាក់ URL repo ពិត​របស់​អ្នក (ប្តូរ yourusername/swiftkey-morphe-patches)
-        source = "https://github.com/yourusername/swiftkey-morphe-patches.git"
-        author = "yourusername"
+        name = "SwiftKey Editing & Offline Voice"
+        description = "Text editing and on-demand offline voice patches for Microsoft SwiftKey, compatible with Morphe."
+        source = "https://github.com/moeunzinkh-debug/Swiftkey.git"
+        author = "moeunzinkh-debug"
         contact = "na"
-        website = "https://github.com/yourusername/swiftkey-morphe-patches"
+        website = "https://github.com/moeunzinkh-debug/Swiftkey"
         license = "GPLv3"
     }
 }

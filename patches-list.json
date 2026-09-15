@@ -3,220 +3,11 @@
   "version": "1.1.1",
   "patches": [
     {
-      "name": "Disable cloud sign-in prompt",
-      "description": "Keeps the optional Microsoft cloud sign-in onboarding from replacing SwiftKey's launcher, so local keyboard setup and settings remain usable without an account. This does not sign in or unlock cloud sync and other account-backed features.",
+      "name": "Offline microphone",
+      "description": "Embeds a whisper.cpp offline speech engine and adds an Offline mic panel inside the keyboard. Choose Khmer, English, Thai or Chinese; tap Download model once (142 MiB shared multilingual model), then dictate without internet. No Google app or external speech provider required. Also redirects SwiftKey's Android SpeechRecognizer path; Microsoft Azure voice typing is not modified.",
       "default": true,
       "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "Disable telemetry",
-      "description": "Stops SwiftKey's first-party telemetry records and uploads, Adjust attribution, Crashlytics, Firebase Sessions, legacy Google Analytics, and app exception reporting. Push messaging and the multipurpose job service stay enabled.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "Fix microphone voice input",
-      "description": "Makes the microphone button work like on Gboard without installing Google: SwiftKey's speech checks stop hard-requiring the Google app and any Android RecognitionService (the system default, e.g. Kõnele/Vosk offline or Speech Recognition & Synthesis) is used. Install and set a speech recognition provider in system settings first; the patch only removes the Google gate, it does not ship a speech engine.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "GmsCore Bytecode Redirect (MicroG RE 7.1.2)",
-      "description": "Rewires the app's Google Play Services references (GMS package name, account vendor, c2dm/GMS permissions and provider authorities) to MicroG RE's GmsCore package app.revanced.android.gms. Service intent actions are kept literal because GmsCore serves them under the original names. Enable together with the other GmsCore patches.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "GmsCore Signature and Availability Bypass",
-      "description": "Stops the bundled Google Play Services availability/version checks from blocking the app when Google Play Services is absent and GmsCore (MicroG RE) takes its place: the enforce check returns immediately and the availability result reads SUCCESS (0). Checks that this build does not include are skipped instead of failing.",
-      "default": true,
-      "dependencies": [],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "GmsCore support (MicroG RE)",
-      "description": "Umbrella patch for devices running MicroG RE (app.revanced.android.gms) instead of Google Play Services. Pulls in: GmsCore bytecode redirect, GmsCore signature and availability bypass, MicroG account permissions and clone process-name spoofing, plus the manifest queries/permissions they need. Requires MicroG RE 7.x installed; it does not provide Microsoft account/cloud features.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch",
         "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": [
-        {
-          "key": "originalSigningSha1",
-          "title": "Original signing certificate SHA-1 (cloned builds only)",
-          "description": "Only needed when the patched APK is cloned/renamed (e.g. with the Morphe \"Clone app\" patch). GmsCore presents this SHA-1 to Google services as the app's real identity. Read it from the ORIGINAL, unmodified SwiftKey 9.13.13.5 APK with: apksigner verify --print-cert SwiftKey.apk (use the SHA-1, hex, colon-separated). Leave empty for a normal, un-cloned install.",
-          "required": false,
-          "type": "kotlin.String",
-          "default": null,
-          "values": null
-        }
-      ]
-    },
-    {
-      "name": "MicroG Account Permissions",
-      "description": "Requests the GmsCore account permissions (GET_ACCOUNTS and app.revanced.gms.EXTENDED_ACCESS) at runtime the first time a SwiftKey activity starts, so account access works against MicroG RE without an ADB helper. Does nothing when no GmsCore is installed.",
-      "default": true,
-      "dependencies": [
         "ResourcePatch"
       ],
       "compatiblePackages": [
@@ -231,13 +22,13 @@
             {
               "version": "9.13.14.5",
               "isExperimental": true,
-              "minSdk": null,
+              "minSdk": 26,
               "description": null
             },
             {
               "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
+              "isExperimental": true,
+              "minSdk": 26,
               "description": null
             }
           ]
@@ -246,10 +37,13 @@
       "options": []
     },
     {
-      "name": "Process Name Spoofing for Clone Support",
-      "description": "For cloned builds (package suffix such as .morphe), strips the clone suffix from the process name the app reads through Application.getProcessName()/ActivityThread, so process-name based routing behaves exactly like the original install. No-op on normal, uncloned builds.",
+      "name": "Text editing toolbar",
+      "description": "Adds a collapsible text editing toolbar inside the keyboard: cursor arrows, Home/End, selection, Select all, Cut, Copy, Paste, Undo and Redo. Actions use the current editor; Undo/Redo depend on that app's support. Does not change login, telemetry or Google services.",
       "default": true,
-      "dependencies": [],
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch"
+      ],
       "compatiblePackages": [
         {
           "packageName": "com.touchtype.swiftkey",
@@ -262,13 +56,13 @@
             {
               "version": "9.13.14.5",
               "isExperimental": true,
-              "minSdk": null,
+              "minSdk": 26,
               "description": null
             },
             {
               "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
+              "isExperimental": true,
+              "minSdk": 26,
               "description": null
             }
           ]
