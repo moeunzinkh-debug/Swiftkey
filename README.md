@@ -10,7 +10,7 @@
 ## 🩹 បញ្ជី​បំណះ
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.3.0](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.3.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;7 patches total
+> **[v1.4.0](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.4.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;8 patches total
 <details>
 <summary>📦 Microsoft SwiftKey&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -28,7 +28,7 @@
 </details>
 
 <details>
-<summary>📦 SimSimi&nbsp;&nbsp;•&nbsp;&nbsp;5 patches</summary>
+<summary>📦 SimSimi&nbsp;&nbsp;•&nbsp;&nbsp;6 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -42,6 +42,7 @@
 | [GmsCore Signature and Availability Bypass](#gmscore-signature-and-availability-bypass) | Neutralize the bundled play-services-basement availability/enforce checks: the enforce check returns immediately and the availability result reads SUCCESS (0), so the app runs when GmsCore replaces real GMS. Checks absent from this build must be soft-skipped, not fatal. |  |
 | [GmsCore support (MicroG RE)](#gmscore-support-microg-re) | Umbrella patch pulling in 2+3+4 plus the shared manifest patch: <queries> visibility for GmsCore/speech services, account permissions, c2dm permission rename. Option: "Original signing certificate SHA-1" (cloned builds only). Requires MicroG RE 7.x installed. | • Original signing certificate SHA-1 |
 | [MicroG Account Permissions](#microg-account-permissions) | Request GmsCore account permissions at runtime once (GET_ACCOUNTS and `app.revanced.gms.EXTENDED_ACCESS`) the first time any app activity starts, using a structural Activity-superclass walk (R8-name independent). No-op when no GmsCore is installed. |  |
+| [Remove ads](#remove-ads) | Removes ads, banners, interstitials, rewarded ads from SimSimi. Blocks AdMob, Unity Ads, AppLovin, IronSource and other ad SDKs client-side. |  |
 | [Unlock membership](#unlock-membership) | Forces the VIP flag to true so premium features are unlocked client-side. Server-validated assets (cloud effects/templates) are not affected. |  |
 
 </details>
