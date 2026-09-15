@@ -1,0 +1,74 @@
+{
+  "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
+  "version": "1.1.1",
+  "patches": [
+    {
+      "name": "Offline microphone",
+      "description": "Embeds a whisper.cpp offline speech engine and adds an Offline mic panel inside the keyboard. Choose Khmer, English, Thai or Chinese; tap Download model once (142 MiB shared multilingual model), then dictate without internet. No Google app or external speech provider required. Also redirects SwiftKey's Android SpeechRecognizer path; Microsoft Azure voice typing is not modified.",
+      "default": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "com.touchtype.swiftkey",
+          "name": "Microsoft SwiftKey",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#00A4EF",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "9.13.14.5",
+              "isExperimental": true,
+              "minSdk": 26,
+              "description": null
+            },
+            {
+              "version": "9.13.13.5",
+              "isExperimental": true,
+              "minSdk": 26,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Text editing toolbar",
+      "description": "Adds a collapsible text editing toolbar inside the keyboard: cursor arrows, Home/End, selection, Select all, Cut, Copy, Paste, Undo and Redo. Actions use the current editor; Undo/Redo depend on that app's support. Does not change login, telemetry or Google services.",
+      "default": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "com.touchtype.swiftkey",
+          "name": "Microsoft SwiftKey",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#00A4EF",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "9.13.14.5",
+              "isExperimental": true,
+              "minSdk": 26,
+              "description": null
+            },
+            {
+              "version": "9.13.13.5",
+              "isExperimental": true,
+              "minSdk": 26,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    }
+  ]
+}

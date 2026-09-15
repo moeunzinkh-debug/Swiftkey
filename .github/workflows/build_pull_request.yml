@@ -32,11 +32,20 @@ jobs:
       - name: Cache Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      - name: Test editing and offline model logic
+        run: bash .github/scripts/test-features.sh
+
+      - name: Install native voice build tools
+        run: '"${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "ndk;28.2.13676358" "cmake;3.22.1"'
+
       - name: Build .mpp bundle
         run: ./gradlew :patches:buildAndroid generatePatchesList --no-daemon
 
       # ត្រួតពិនិត្យថា bundle .mpp ចេញមែន ហើយបញ្ជូន path ពិតទៅ step ខាងក្រោម
       # (upload-artifact មិនស្គាល់ extglob ដូច !(*sources*) ទេ ដូច្នេះត្រូវដាក់ path ច្បាស់លាស់)
+      - name: Verify generated feature catalogue
+        run: python3 .github/scripts/test-feature-scope.py FeatureScopeTests.test_catalogue_matches_source
+
       - name: Verify .mpp bundle
         id: verify
         run: |
@@ -63,6 +72,7 @@ jobs:
             echo "- \`$bundle\` — $size bytes" >> "$GITHUB_STEP_SUMMARY"
             # ត្រួតពិនិត្យខាងក្នុង bundle ពិតៗ៖ កូដដែល compile រួច (classes*.dex ពី buildAndroid)
             # និង extension .mpe (ពី extensions/) ត្រូវតែមាននៅក្នុង .mpp
+            python3 .github/scripts/verify-feature-bundle.py "$bundle"
             entries=$(unzip -Z1 "$bundle")
             dex=$(grep -cE '(^|/)classes[0-9]*\.dex$' <<<"$entries" || true)
             mpe=$(grep -cE '\.mpe$' <<<"$entries" || true)

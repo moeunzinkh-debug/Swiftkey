@@ -19,3 +19,10 @@ provided that such references:
 - Are accurate, factual, and non-misleading;
 - Do not suggest authorship by the Morphe project; and
 - Appear only in a secondary or descriptive context, not as part of the product or project name.
+
+Offline voice additions
+-----------------------
+The offline engine embeds whisper.cpp / ggml (MIT); the Whisper base model
+(MIT) is downloaded only at the user's request and is not stored in this repo.
+Full notices are in patches/src/main/resources/native/swiftkey/THIRD_PARTY_NOTICES.txt
+and are copied into the patched APK under assets/swiftkey-offline-voice/.
