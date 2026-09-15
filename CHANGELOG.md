@@ -1,3 +1,10 @@
+## [1.1.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.0.1...v1.1.0) (2026-09-15)
+
+### ✨ New Features
+
+* **voice:** add offline models support for Khmer, English, Thai, and Chinese ([12cbfcf](https://github.com/moeunzinkh-debug/Swiftkey/commit/12cbfcfc1358e8da4cc54729926092d256a8366c))
+* **voice:** add on-demand Vosk offline voice model manager ([9a6c1dd](https://github.com/moeunzinkh-debug/Swiftkey/commit/9a6c1dd1549eb3d5f73f35a42743e0a0a754abf4))
+
 ## [1.0.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.0.0...v1.0.1) (2026-09-14)
 
 ### 🐛 Bug Fixes
