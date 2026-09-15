@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.0...v1.4.1) (2026-09-15)
+
+### 🐛 Bug Fixes
+
+* compile errors in SimSimi patches - use mutableClassDefBy for getAllClassesWithStrings ([2dbe431](https://github.com/moeunzinkh-debug/Swiftkey/commit/2dbe4314fdf7d0c4242434f9cd260dd234c7c6a4))
+* proguard keep all extensions, explicit .mpe names, sync version to 1.4.0 ([8708e06](https://github.com/moeunzinkh-debug/Swiftkey/commit/8708e066811def9f44c914ae1819b52b2e291cbc))
+
 ## [1.1.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.1.0...v1.1.1) (2026-09-15)
 
 ### 🐛 Bug Fixes
