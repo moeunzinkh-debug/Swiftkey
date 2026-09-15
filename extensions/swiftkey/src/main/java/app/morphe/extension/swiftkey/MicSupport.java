@@ -116,11 +116,11 @@ public final class MicSupport {
                 }
             }
 
-            // ពិនិត្យមើល និងរៀបចំ Vosk Offline Model ប្រសិនបើគ្មានម៉ាស៊ីនសំឡេងលើប្រព័ន្ធ
-            if (!hasRecognitionService(app)) {
-                VoskModelManager.ensureModelDownloaded(app, null, null);
-            }
-
+            // ចំណាំ៖ បំណះ​នេះ​មិន​ទាញយក model ឬ​ឯកសារ​ណា​មួយ​ពី​អ៊ីនធឺណិត​ទេ។ វា​គ្រាន់តែ​ដក
+            // ច្រក​របាំង Google ចេញ ដើម្បី​ឲ្យ​ SwiftKey ប្រើ RecognitionService លំនាំដើម​
+            // របស់​ប្រព័ន្ធ (Kõnele/Vosk ជាដើម)។ ការ​ទាញយក model ធ្វើ​ដោយ​កម្មវិធី​ម៉ាស៊ីន​នោះ
+            // ខ្លួន​ឯង មិនមែន​ដោយ​បំណះ​ទេ — ហើយ​ក៏​ជៀស​វាង​ការ​ទាញយក ~40MB ស្ងាត់ៗ
+            // ព្រោះ​ extension មិន​មាន​ម៉ាស៊ីន​ណា​អាន model នោះ​ឡើយ។
             return SpeechRecognizer.createSpeechRecognizer(app);
         } catch (Throwable fallbackError) {
             // ការ​បង្កើត​លំនាំដើម​ក៏​បរាជ័យ — ព្យាយាម​តម្លៃ​ដើម​ជា​ចុងក្រោយ​បង្អស់
