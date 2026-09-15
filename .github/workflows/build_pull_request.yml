@@ -4,7 +4,11 @@ on:
   workflow_dispatch:
   pull_request:
     branches:
+      # `main` ជា​សាខា​ចេញ​ផ្សាយ (release.yml ដំណើរការ​នៅ​ទីនោះ)។ បើ​មិន​ដាក់ `main` ទេ PR
+      # ទៅ​ main មិន​ត្រូវ​បាន build សោះ​ទេ ហើយ​កំហុស compile ចេញ​រហូត​ដល់​ពេល merge
+      # (ឃើញ​បាន​ពី PR #12/#13) —
       - dev
+      - main
 
 jobs:
   release:
