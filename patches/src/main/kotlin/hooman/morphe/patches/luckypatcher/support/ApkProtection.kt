@@ -1,6 +1,6 @@
 package hooman.morphe.patches.luckypatcher.support
 
-import app.morphe.patcher.patch.PatchContext
+import app.morphe.patcher.patch.BytecodePatchContext
 import com.android.tools.smali.dexlib2.iface.Method
 import hooman.morphe.patches.support.*
 
@@ -22,7 +22,7 @@ import hooman.morphe.patches.support.*
  */
 
 class LuckyPatcherProtection(
-    private val context: PatchContext,
+    private val context: BytecodePatchContext,
 ) {
     private val backupManager = BackupManager()
     private val stats = PatchProtectionStats()
@@ -80,7 +80,7 @@ class LuckyPatcherProtection(
 
     fun safePatchMethod(
         classType: String,
-        method: com.android.tools.smali.dexlib2.iface.MutableMethod,
+        method: Method,
         patchCode: String,
         location: Int = 0,
     ): Boolean {
@@ -88,7 +88,7 @@ class LuckyPatcherProtection(
 
         return try {
             // 1. Backup
-            val originalMethod = context.classDefBy(classType)?.methods?.firstOrNull { m ->
+            val originalMethod = context.classDefByOrNull(classType)?.methods?.firstOrNull { m ->
                 m.name == method.name && m.returnType == method.returnType && m.parameterTypes.size == method.parameterTypes.size
             }
             if (originalMethod != null) {
@@ -96,7 +96,7 @@ class LuckyPatcherProtection(
             }
 
             // 2. Safe patch
-            val success = SafePatcher.safeAddInstructions(method, location, patchCode, backupManager, methodKey)
+            val success = SafePatcher.safeAddInstructions(context, method, location, patchCode, backupManager, methodKey)
 
             if (success) {
                 // 3. Validate
@@ -136,6 +136,6 @@ class LuckyPatcherProtection(
 }
 
 // Extension for easy usage in patches
-fun PatchContext.createLuckyPatcherProtection(): LuckyPatcherProtection {
+fun BytecodePatchContext.createLuckyPatcherProtection(): LuckyPatcherProtection {
     return LuckyPatcherProtection(this)
 }

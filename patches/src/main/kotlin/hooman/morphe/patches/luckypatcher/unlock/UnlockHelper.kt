@@ -1,6 +1,6 @@
 package hooman.morphe.patches.luckypatcher.unlock
 
-import app.morphe.patcher.patch.PatchContext
+import app.morphe.patcher.patch.BytecodePatchContext
 import com.android.tools.smali.dexlib2.AccessFlags
 import hooman.morphe.patches.luckypatcher.support.createLuckyPatcherProtection
 import hooman.morphe.patches.support.*
@@ -22,7 +22,7 @@ internal data class PatchStats(
     val protectionStats: PatchProtectionStats = PatchProtectionStats(),
 )
 
-internal fun PatchContext.patchViaFingerprints(
+internal fun BytecodePatchContext.patchViaFingerprints(
     stats: PatchStats,
     vararg fingerprintPairs: Pair<app.morphe.patcher.Fingerprint, Boolean>,
 ) {
@@ -53,20 +53,10 @@ internal fun PatchContext.patchViaFingerprints(
                 val backupManager = protection.getBackupManager()
                 backupManager.backup(methodKey, method)
 
-                // Safe patch
-                val mutableClass = try {
-                    mutableClassDefBy(classDefBy(classType) ?: return@let)
-                } catch (_: Exception) {
-                    return@let
-                }
+                // Safe patch — safeAddInstructions រក mutable method តាមរយៈ context ខាងក្នុង
+                val success = SafePatcher.safeAddInstructions(this, method, 0, patchCode, backupManager, methodKey)
 
-                val mutableMethod = mutableClass.methods.firstOrNull { m ->
-                    m.name == method.name && m.returnType == method.returnType && m.parameterTypes.size == method.parameterTypes.size
-                } ?: return@let
-
-                val success = SafePatcher.safeAddInstructions(mutableMethod, 0, patchCode, backupManager, methodKey)
-
-                if (success && DexIntegrityChecker.validateMethodAfterPatch(mutableMethod, classType)) {
+                if (success && DexIntegrityChecker.validateMethodAfterPatch(method, classType)) {
                     stats.patched++
                     stats.alreadyPatched.add(methodKey)
                     stats.protectionStats.recordSuccess(classType)
@@ -83,7 +73,7 @@ internal fun PatchContext.patchViaFingerprints(
     }
 }
 
-internal fun PatchContext.patchIntViaFingerprints(
+internal fun BytecodePatchContext.patchIntViaFingerprints(
     stats: PatchStats,
     vararg fingerprints: app.morphe.patcher.Fingerprint,
     returnValue: Int = 1,
@@ -114,19 +104,10 @@ internal fun PatchContext.patchIntViaFingerprints(
                 val backupManager = protection.getBackupManager()
                 backupManager.backup(methodKey, method)
 
-                val mutableClass = try {
-                    mutableClassDefBy(classDefBy(classType) ?: return@let)
-                } catch (_: Exception) {
-                    return@let
-                }
+                // Safe patch — safeAddInstructions រក mutable method តាមរយៈ context ខាងក្នុង
+                val success = SafePatcher.safeAddInstructions(this, method, 0, patchCode, backupManager, methodKey)
 
-                val mutableMethod = mutableClass.methods.firstOrNull { m ->
-                    m.name == method.name && m.returnType == method.returnType && m.parameterTypes.size == method.parameterTypes.size
-                } ?: return@let
-
-                val success = SafePatcher.safeAddInstructions(mutableMethod, 0, patchCode, backupManager, methodKey)
-
-                if (success && DexIntegrityChecker.validateMethodAfterPatch(mutableMethod, classType)) {
+                if (success && DexIntegrityChecker.validateMethodAfterPatch(method, classType)) {
                     stats.patched++
                     stats.alreadyPatched.add(methodKey)
                     stats.protectionStats.recordSuccess(classType)
@@ -142,7 +123,7 @@ internal fun PatchContext.patchIntViaFingerprints(
     }
 }
 
-internal fun PatchContext.genericScanAndPatch(
+internal fun BytecodePatchContext.genericScanAndPatch(
     stats: PatchStats,
     booleanIndicators: Set<String>,
     intIndicators: Set<String>,
@@ -168,12 +149,6 @@ internal fun PatchContext.genericScanAndPatch(
         }
 
         if (protection.getStats().isClassOverLimit(classType, 50)) {
-            return@forEach
-        }
-
-        val mutableClass = try {
-            mutableClassDefBy(classDef)
-        } catch (_: Exception) {
             return@forEach
         }
 
@@ -203,13 +178,6 @@ internal fun PatchContext.genericScanAndPatch(
                 intIndicators.any { ind -> s.contains(ind, ignoreCase = false) || s.equals(ind, ignoreCase = true) }
             }
 
-            val mutableMethod = mutableClass.methods.firstOrNull { candidate ->
-                candidate.name == originalMethod.name &&
-                    candidate.returnType == originalMethod.returnType &&
-                    candidate.parameterTypes.size == originalMethod.parameterTypes.size &&
-                    candidate.parameterTypes.zip(originalMethod.parameterTypes).all { (a, b) -> a.toString() == b.toString() }
-            } ?: return@forEach
-
             try {
                 when {
                     originalMethod.returnType == "Z" && hasBooleanString -> {
@@ -217,8 +185,8 @@ internal fun PatchContext.genericScanAndPatch(
                         val backupManager = protection.getBackupManager()
                         backupManager.backup(methodKey, originalMethod)
 
-                        val success = SafePatcher.safeAddInstructions(mutableMethod, 0, code, backupManager, methodKey)
-                        if (success && DexIntegrityChecker.validateMethodAfterPatch(mutableMethod, classType)) {
+                        val success = SafePatcher.safeAddInstructions(this, originalMethod, 0, code, backupManager, methodKey)
+                        if (success && DexIntegrityChecker.validateMethodAfterPatch(originalMethod, classType)) {
                             stats.patched++
                             stats.alreadyPatched.add(methodKey)
                             stats.protectionStats.recordSuccess(classType)
@@ -231,8 +199,8 @@ internal fun PatchContext.genericScanAndPatch(
                         val backupManager = protection.getBackupManager()
                         backupManager.backup(methodKey, originalMethod)
 
-                        val success = SafePatcher.safeAddInstructions(mutableMethod, 0, code, backupManager, methodKey)
-                        if (success && DexIntegrityChecker.validateMethodAfterPatch(mutableMethod, classType)) {
+                        val success = SafePatcher.safeAddInstructions(this, originalMethod, 0, code, backupManager, methodKey)
+                        if (success && DexIntegrityChecker.validateMethodAfterPatch(originalMethod, classType)) {
                             stats.patched++
                             stats.alreadyPatched.add(methodKey)
                             stats.protectionStats.recordSuccess(classType)
@@ -248,7 +216,7 @@ internal fun PatchContext.genericScanAndPatch(
     }
 }
 
-internal fun PatchContext.genericBillingBypass(
+internal fun BytecodePatchContext.genericBillingBypass(
     stats: PatchStats,
 ) {
     val protection = createLuckyPatcherProtection()
@@ -281,12 +249,6 @@ internal fun PatchContext.genericBillingBypass(
 
         if (protection.getStats().isClassOverLimit(classType, 50)) return@forEach
 
-        val mutableClass = try {
-            mutableClassDefBy(classDef)
-        } catch (_: Exception) {
-            return@forEach
-        }
-
         classDef.methods.forEach { originalMethod ->
             val impl = originalMethod.implementation ?: return@forEach
             if (AccessFlags.ABSTRACT.isSet(originalMethod.accessFlags) || AccessFlags.NATIVE.isSet(originalMethod.accessFlags)) return@forEach
@@ -314,29 +276,23 @@ internal fun PatchContext.genericBillingBypass(
 
             if (!hasBillingString && !isBillingMethodName) return@forEach
 
-            val mutableMethod = mutableClass.methods.firstOrNull { candidate ->
-                candidate.name == originalMethod.name &&
-                    candidate.returnType == originalMethod.returnType &&
-                    candidate.parameterTypes.size == originalMethod.parameterTypes.size
-            } ?: return@forEach
-
             try {
                 val backupManager = protection.getBackupManager()
                 backupManager.backup(methodKey, originalMethod)
 
                 val success = when (originalMethod.returnType) {
                     "Z" -> {
-                        SafePatcher.safeAddInstructions(mutableMethod, 0, "const/4 v0, 0x1\nreturn v0", backupManager, methodKey)
+                        SafePatcher.safeAddInstructions(this, originalMethod, 0, "const/4 v0, 0x1\nreturn v0", backupManager, methodKey)
                     }
                     "I" -> {
                         val returnVal = if (classType.contains("license", ignoreCase = true)) 0 else 1
                         val code = "const/4 v0, $returnVal\nreturn v0"
-                        SafePatcher.safeAddInstructions(mutableMethod, 0, code, backupManager, methodKey)
+                        SafePatcher.safeAddInstructions(this, originalMethod, 0, code, backupManager, methodKey)
                     }
                     else -> false
                 }
 
-                if (success && DexIntegrityChecker.validateMethodAfterPatch(mutableMethod, classType)) {
+                if (success && DexIntegrityChecker.validateMethodAfterPatch(originalMethod, classType)) {
                     stats.patched++
                     stats.alreadyPatched.add(methodKey)
                     stats.protectionStats.recordSuccess(classType)

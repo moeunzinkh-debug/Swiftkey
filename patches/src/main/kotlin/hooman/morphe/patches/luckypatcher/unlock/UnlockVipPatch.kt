@@ -71,20 +71,11 @@ val unlockVipPatch = bytecodePatch(
                 val backupManager = protection.getBackupManager()
                 backupManager.backup(methodKey, method)
 
-                val mutableClass = try {
-                    mutableClassDefBy(classDefBy(classType) ?: return@let)
-                } catch (_: Exception) {
-                    return@let
-                }
-
-                val mutableMethod = mutableClass.methods.firstOrNull { m ->
-                    m.name == method.name && m.returnType == method.returnType && m.parameterTypes.size == method.parameterTypes.size
-                } ?: return@let
-
                 val patchCode = if (method.returnType == "I") "const/4 v0, 0x0\nreturn v0" else "const/4 v0, 0x1\nreturn v0"
-                val success = SafePatcher.safeAddInstructions(mutableMethod, 0, patchCode, backupManager, methodKey)
+                // Safe patch — safeAddInstructions រក mutable method តាមរយៈ context ខាងក្នុង
+                val success = SafePatcher.safeAddInstructions(this, method, 0, patchCode, backupManager, methodKey)
 
-                if (success && DexIntegrityChecker.validateMethodAfterPatch(mutableMethod, classType)) {
+                if (success && DexIntegrityChecker.validateMethodAfterPatch(method, classType)) {
                     stats.patched++
                     stats.alreadyPatched.add(methodKey)
                     stats.protectionStats.recordSuccess(classType)
@@ -164,12 +155,6 @@ val unlockVipPatch = bytecodePatch(
                 if (MethodValidator.isSystemClass(classType)) return@forEach
                 if (protection.getStats().isClassOverLimit(classType, 50)) return@forEach
 
-                val mutableClass = try {
-                    mutableClassDefBy(classDef)
-                } catch (_: Exception) {
-                    return@forEach
-                }
-
                 classDef.methods.forEach { originalMethod ->
                     if (originalMethod.returnType != "Ljava/lang/String;") return@forEach
                     val impl = originalMethod.implementation ?: return@forEach
@@ -192,25 +177,20 @@ val unlockVipPatch = bytecodePatch(
 
                     if (!isStatusMethod) return@forEach
 
-                    val mutableMethod = mutableClass.methods.firstOrNull { candidate ->
-                        candidate.name == originalMethod.name &&
-                            candidate.returnType == originalMethod.returnType &&
-                            candidate.parameterTypes.size == originalMethod.parameterTypes.size
-                    } ?: return@forEach
-
                     try {
                         val backupManager = protection.getBackupManager()
                         backupManager.backup(methodKey, originalMethod)
 
                         val success = SafePatcher.safeAddInstructions(
-                            mutableMethod,
+                            this,
+                            originalMethod,
                             0,
                             "const-string v0, \"premium\"\nreturn-object v0",
                             backupManager,
                             methodKey,
                         )
 
-                        if (success && DexIntegrityChecker.validateMethodAfterPatch(mutableMethod, classType)) {
+                        if (success && DexIntegrityChecker.validateMethodAfterPatch(originalMethod, classType)) {
                             stats.patched++
                             stats.alreadyPatched.add(methodKey)
                             stats.protectionStats.recordSuccess(classType)

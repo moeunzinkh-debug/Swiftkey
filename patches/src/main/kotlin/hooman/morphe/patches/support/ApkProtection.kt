@@ -1,7 +1,7 @@
 package hooman.morphe.patches.support
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
-import app.morphe.patcher.patch.PatchContext
+import app.morphe.patcher.patch.BytecodePatchContext
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.Instruction
@@ -24,7 +24,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.formats.Instruction31c
  * ប្រើប្រាស់៖
  * ```
  * if (!isSafeToPatch(method, classDef.type)) return@forEach
- * safeAddInstructions(method, 0, "const/4 v0, 0x1\nreturn v0", backupManager)
+ * safeAddInstructions(context, method, 0, "const/4 v0, 0x1\nreturn v0", backupManager)
  * ```
  */
 
@@ -78,7 +78,8 @@ object MethodValidator {
         if (methodKey in alreadyPatched) return false
 
         // 5. Check method has at least 1 instruction (not empty)
-        if (impl.instructions.isEmpty()) return false
+        // ចំណាំ: dexlib2 ត្រឡប់ Iterable ដែលគ្មាន isEmpty() ក្នុង Kotlin — ប្រើ none() ជំនួស
+        if (impl.instructions.none()) return false
 
         // 6. Check register count - must have at least 1 local register for v0
         // impl.registerCount includes parameters + locals. For safe v0 usage, need registerCount > paramCount
@@ -123,7 +124,7 @@ class BackupManager {
     fun getBackupInstructions(methodKey: String): List<Instruction>? = backups[methodKey]
 
     fun rollback(
-        context: PatchContext,
+        context: BytecodePatchContext,
         methodKey: String,
         classType: String,
         methodName: String,
@@ -132,7 +133,7 @@ class BackupManager {
     ): Boolean {
         return try {
             val backupInstructions = backups[methodKey] ?: return false
-            val classDef = context.classDefBy(classType) ?: return false
+            val classDef = context.classDefByOrNull(classType) ?: return false
             val mutableClass = context.mutableClassDefBy(classDef)
 
             val mutableMethod = mutableClass.methods.firstOrNull { m ->
@@ -163,9 +164,14 @@ object SafePatcher {
 
     /**
      * បញ្ចូល instruction ដោយសុវត្ថិភាព — ពិនិត្យ register count, backup, validate
+     *
+     * រក method ដែលអាចកែបាន (mutable) តាមរយៈ [context] ដោយប្រៀបធៀប signature
+     * បន្ទាប់មកបញ្ចូល instruction តាមរយៈ extension `addInstructions` ដូច patch
+     * ដែល build ជោគជ័យទាំងអស់ប្រើ (unlockMembershipPatch ជាដើម)។
      */
     fun safeAddInstructions(
-        method: com.android.tools.smali.dexlib2.iface.MutableMethod,
+        context: BytecodePatchContext,
+        method: Method,
         location: Int,
         instructions: String,
         backupManager: BackupManager? = null,
@@ -174,7 +180,7 @@ object SafePatcher {
         return try {
             // 1. Backup if manager provided
             if (backupManager != null && methodKey != null) {
-                // Backup is done before calling this in caller, but double-check
+                backupManager.backup(methodKey, method)
             }
 
             // 2. Validate register usage in patch code
@@ -186,23 +192,35 @@ object SafePatcher {
             }
 
             // 3. Validate location
-            val instrCount = method.implementation?.instructions?.count() ?: 0
+            val instrCount = impl?.instructions?.count() ?: 0
             if (location < 0 || location > instrCount) {
                 println("[ApkProtection] ⚠️ Invalid location $location for method ${method.name} with $instrCount instructions")
                 return false
             }
 
-            // 4. Add instructions
-            method.addInstructions(location, instructions)
-
-            // 5. Post-validation: check method still has valid implementation
-            val newImpl = method.implementation
-            if (newImpl == null) {
-                println("[ApkProtection] ❌ Method ${method.name} implementation became null after patch")
+            // 4. រក mutable method ពី context (ប្រើ type inference — មិន annotate MutableMethod ផ្ទាល់)
+            val classDef = context.classDefByOrNull(method.definingClass)
+                ?: run {
+                    println("[ApkProtection] ❌ Class ${method.definingClass} not found, cannot patch ${method.name}")
+                    return false
+                }
+            val mutableClass = context.mutableClassDefBy(classDef)
+            val mutableMethod = mutableClass.methods.firstOrNull { m ->
+                m.name == method.name &&
+                    m.returnType == method.returnType &&
+                    m.parameterTypes.size == method.parameterTypes.size &&
+                    m.parameterTypes.zip(method.parameterTypes).all { (a, b) -> a.toString() == b.toString() }
+            }
+            if (mutableMethod == null) {
+                println("[ApkProtection] ❌ Mutable method not found for ${method.name} in ${method.definingClass}")
                 return false
             }
 
-            if (newImpl.instructions.isEmpty()) {
+            mutableMethod.addInstructions(location, instructions)
+
+            // 5. Post-validation: check method still has valid implementation
+            val newCount = mutableMethod.implementation?.instructions?.count() ?: 0
+            if (newCount == 0) {
                 println("[ApkProtection] ❌ Method ${method.name} has no instructions after patch")
                 return false
             }
@@ -266,7 +284,7 @@ object DexIntegrityChecker {
             val impl = method.implementation ?: return false
 
             // Check 1: Instructions not empty
-            if (impl.instructions.isEmpty()) {
+            if (impl.instructions.none()) {
                 println("[ApkProtection] ❌ Validation failed: $classType->${method.name} has no instructions")
                 return false
             }
@@ -277,15 +295,7 @@ object DexIntegrityChecker {
                 return false
             }
 
-            // Check 3: Try-catch blocks valid (if any)
-            impl.tryBlocks.forEach { tryBlock ->
-                if (tryBlock.startAddress < 0 || tryBlock.codeUnitCount <= 0) {
-                    println("[ApkProtection] ❌ Validation failed: $classType->${method.name} invalid try block")
-                    return false
-                }
-            }
-
-            // Check 4: First instruction should be our patch (if we patched at 0)
+            // Check 3: First instruction should be our patch (if we patched at 0)
             // This is optional - just for logging
             true
         } catch (e: Exception) {
@@ -295,7 +305,6 @@ object DexIntegrityChecker {
     }
 
     fun validateClassAfterPatch(
-        context: PatchContext,
         classType: String,
         maxPatchesPerClass: Int = 50,
         patchCountInClass: Int = 0,
