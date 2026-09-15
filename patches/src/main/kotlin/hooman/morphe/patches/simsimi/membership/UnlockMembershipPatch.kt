@@ -41,23 +41,11 @@ val unlockMembershipPatch = bytecodePatch(
                 // Skip abstract/native already filtered, but double-check implementation exists.
                 if (method.implementation == null) return@let
 
-                val isStatic = AccessFlags.STATIC.isSet(method.accessFlags)
-                val hasParams = method.parameterTypes.isNotEmpty()
-
-                // For boolean true: const/4 with 0x1
-                val patchCode = if (isStatic && !hasParams) {
-                    // static no args -> need v0
-                    """
+                // ប្រើ v0 ជានិច្ច — កុំ overwrite p0 (this) ក្នុង instance method
+                val patchCode = """
                         const/4 v0, 0x1
                         return v0
                     """
-                } else {
-                    // instance or static with params -> reuse p0
-                    """
-                        const/4 p0, 0x1
-                        return p0
-                    """
-                }
 
                 try {
                     method.addInstructions(0, patchCode)
@@ -72,19 +60,10 @@ val unlockMembershipPatch = bytecodePatch(
         // Int-returning VIP level/status -> return 1 or high value
         VipStatusIntFingerprint.methodOrNull?.let { method ->
             if (method.implementation != null) {
-                val isStatic = AccessFlags.STATIC.isSet(method.accessFlags)
-                val hasParams = method.parameterTypes.isNotEmpty()
-                val patchCode = if (isStatic && !hasParams) {
-                    """
+                val patchCode = """
                         const/4 v0, 0x1
                         return v0
                     """
-                } else {
-                    """
-                        const/4 p0, 0x1
-                        return p0
-                    """
-                }
                 try {
                     method.addInstructions(0, patchCode)
                     patched++
@@ -147,21 +126,22 @@ val unlockMembershipPatch = bytecodePatch(
             // Skip extension code
             if (classDef.type.startsWith("Lapp/morphe/extension/")) return@forEach
 
-            classDef.methods.forEach { method ->
-                val impl = method.implementation ?: return@forEach
-                if (AccessFlags.ABSTRACT.isSet(method.accessFlags) || AccessFlags.NATIVE.isSet(method.accessFlags)) return@forEach
+            val mutableClass = try {
+                mutableClassDefBy(classDef)
+            } catch (_: Exception) {
+                return@forEach
+            }
+
+            classDef.methods.forEach { originalMethod ->
+                val impl = originalMethod.implementation ?: return@forEach
+                if (AccessFlags.ABSTRACT.isSet(originalMethod.accessFlags) || AccessFlags.NATIVE.isSet(originalMethod.accessFlags)) return@forEach
 
                 // Avoid double-patching same method signature
-                val methodKey = "${classDef.type}->${method.name}${method.parameterTypes}${method.returnType}"
+                val methodKey = "${classDef.type}->${originalMethod.name}${originalMethod.parameterTypes}${originalMethod.returnType}"
                 if (methodKey in alreadyPatched) return@forEach
 
                 // Collect string constants in method
                 val stringsInMethod = impl.instructions.mapNotNull { insn ->
-                    // Use string reference extraction via toString search is not ideal, but we can check via instruction string representation
-                    // Instead, we will use method's strings via fingerprint-like approach: check if any instruction is const-string
-                    // We'll rely on method containing any of our indicators as substring in the smali dump.
-                    // For simplicity, we check via implementation's instruction list for string references using reflection-like approach:
-                    // The dexlib2 Instruction21c/31c with StringReference - we can attempt cast.
                     try {
                         val ref = (insn as? com.android.tools.smali.dexlib2.iface.instruction.formats.Instruction21c)?.reference as? com.android.tools.smali.dexlib2.iface.reference.StringReference
                         ref?.string
@@ -180,45 +160,33 @@ val unlockMembershipPatch = bytecodePatch(
                 val hasVipBooleanString = stringsInMethod.any { s -> vipBooleanIndicators.any { ind -> s.contains(ind, ignoreCase = false) || s.equals(ind, ignoreCase = true) } }
                 val hasVipIntString = stringsInMethod.any { s -> vipIntIndicators.any { ind -> s.contains(ind, ignoreCase = false) || s.equals(ind, ignoreCase = true) } }
 
-                if (method.returnType == "Z" && hasVipBooleanString) {
-                    val isStatic = AccessFlags.STATIC.isSet(method.accessFlags)
-                    val hasParams = method.parameterTypes.isNotEmpty()
-                    val patchCode = if (isStatic && !hasParams) {
-                        """
+                val mutableMethod = mutableClass.methods.firstOrNull { candidate ->
+                    candidate.name == originalMethod.name &&
+                        candidate.returnType == originalMethod.returnType &&
+                        candidate.parameterTypes.size == originalMethod.parameterTypes.size &&
+                        candidate.parameterTypes.zip(originalMethod.parameterTypes).all { (a, b) -> a.toString() == b.toString() }
+                } ?: return@forEach
+
+                if (originalMethod.returnType == "Z" && hasVipBooleanString) {
+                    val patchCode = """
                             const/4 v0, 0x1
                             return v0
                         """
-                    } else {
-                        """
-                            const/4 p0, 0x1
-                            return p0
-                        """
-                    }
                     try {
-                        method.addInstructions(0, patchCode)
+                        mutableMethod.addInstructions(0, patchCode)
                         patched++
                         alreadyPatched.add(methodKey)
-                        // println("[UnlockMembership][Generic] Patched Z $methodKey with strings $stringsInMethod")
                     } catch (_: Exception) {
                         // ignore
                     }
-                } else if (method.returnType == "I" && (hasVipBooleanString || hasVipIntString)) {
+                } else if (originalMethod.returnType == "I" && (hasVipBooleanString || hasVipIntString)) {
                     // For int VIP level, return 1 (or 3 for higher tier) - use 1 for safe
-                    val isStatic = AccessFlags.STATIC.isSet(method.accessFlags)
-                    val hasParams = method.parameterTypes.isNotEmpty()
-                    val patchCode = if (isStatic && !hasParams) {
-                        """
+                    val patchCode = """
                             const/4 v0, 0x1
                             return v0
                         """
-                    } else {
-                        """
-                            const/4 p0, 0x1
-                            return p0
-                        """
-                    }
                     try {
-                        method.addInstructions(0, patchCode)
+                        mutableMethod.addInstructions(0, patchCode)
                         patched++
                         alreadyPatched.add(methodKey)
                     } catch (_: Exception) {
