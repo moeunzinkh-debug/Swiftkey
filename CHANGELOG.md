@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.1.0...v1.1.1) (2026-09-15)
+
+### 🐛 Bug Fixes
+
+* resolve modify/delete conflicts in the main→dev back-merge ([326dcc1](https://github.com/moeunzinkh-debug/Swiftkey/commit/326dcc122ddfe1672ab3db07935e6ddf25b11255))
+
 ## [1.1.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.0.1...v1.1.0) (2026-09-15)
 
 ### ✨ New Features
