@@ -116,6 +116,11 @@ public final class MicSupport {
                 }
             }
 
+            // ពិនិត្យមើល និងរៀបចំ Vosk Offline Model ប្រសិនបើគ្មានម៉ាស៊ីនសំឡេងលើប្រព័ន្ធ
+            if (!hasRecognitionService(app)) {
+                VoskModelManager.ensureModelDownloaded(app, null);
+            }
+
             return SpeechRecognizer.createSpeechRecognizer(app);
         } catch (Throwable fallbackError) {
             // ការ​បង្កើត​លំនាំដើម​ក៏​បរាជ័យ — ព្យាយាម​តម្លៃ​ដើម​ជា​ចុងក្រោយ​បង្អស់
