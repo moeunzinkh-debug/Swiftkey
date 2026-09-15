@@ -10,8 +10,5 @@ internal val simsimiCompatibility = Compatibility(
     targets = listOf(
         AppTarget("9.1.9"),
         AppTarget("9.1.8"),
-        AppTarget("9.1.7"),
-        AppTarget("9.1.2", isExperimental = true),
-        AppTarget("8.7.5", isExperimental = true),
     ),
 )

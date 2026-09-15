@@ -1,40 +1,7 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "patches": [
-    {
-      "name": "Disable cloud sign-in prompt",
-      "description": "Keeps the optional Microsoft cloud sign-in onboarding from replacing SwiftKey's launcher, so local keyboard setup and settings remain usable without an account. This does not sign in or unlock cloud sync and other account-backed features.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
     {
       "name": "Disable telemetry",
       "description": "Stops SwiftKey's first-party telemetry records and uploads, Adjust attribution, Crashlytics, Firebase Sessions, legacy Google Analytics, and app exception reporting. Push messaging and the multipurpose job service stay enabled.",
@@ -102,221 +69,6 @@
       "options": []
     },
     {
-      "name": "GmsCore Bytecode Redirect (MicroG RE 7.1.2)",
-      "description": "Rewires the app's Google Play Services references (GMS package name, account vendor, c2dm/GMS permissions and provider authorities) to MicroG RE's GmsCore package app.revanced.android.gms. Service intent actions are kept literal because GmsCore serves them under the original names. Enable together with the other GmsCore patches.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "GmsCore Signature and Availability Bypass",
-      "description": "Stops the bundled Google Play Services availability/version checks from blocking the app when Google Play Services is absent and GmsCore (MicroG RE) takes its place: the enforce check returns immediately and the availability result reads SUCCESS (0). Checks that this build does not include are skipped instead of failing.",
-      "default": true,
-      "dependencies": [],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        },
-        {
-          "packageName": "com.ismaker.android.simsimi",
-          "name": "SimSimi",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#FFD93A",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.1.9",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.8",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.7",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.2",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "8.7.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "GmsCore support (MicroG RE)",
-      "description": "Umbrella patch for devices running MicroG RE (app.revanced.android.gms) instead of Google Play Services. Pulls in: GmsCore bytecode redirect, GmsCore signature and availability bypass, MicroG account permissions and clone process-name spoofing, plus the manifest queries/permissions they need. Requires MicroG RE 7.x installed; it does not provide Microsoft account/cloud features.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": [
-        {
-          "key": "originalSigningSha1",
-          "title": "Original signing certificate SHA-1 (cloned builds only)",
-          "description": "Only needed when the patched APK is cloned/renamed (e.g. with the Morphe \"Clone app\" patch). GmsCore presents this SHA-1 to Google services as the app's real identity. Read it from the ORIGINAL, unmodified SwiftKey 9.13.13.5 APK with: apksigner verify --print-cert SwiftKey.apk (use the SHA-1, hex, colon-separated). Leave empty for a normal, un-cloned install.",
-          "required": false,
-          "type": "kotlin.String",
-          "default": null,
-          "values": null
-        }
-      ]
-    },
-    {
-      "name": "MicroG Account Permissions",
-      "description": "Requests the GmsCore account permissions (GET_ACCOUNTS and app.revanced.gms.EXTENDED_ACCESS) at runtime the first time a SwiftKey activity starts, so account access works against MicroG RE without an ADB helper. Does nothing when no GmsCore is installed.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "Process Name Spoofing for Clone Support",
-      "description": "For cloned builds (package suffix such as .morphe), strips the clone suffix from the process name the app reads through Application.getProcessName()/ActivityThread, so process-name based routing behaves exactly like the original install. No-op on normal, uncloned builds.",
-      "default": true,
-      "dependencies": [],
-      "compatiblePackages": [
-        {
-          "packageName": "com.touchtype.swiftkey",
-          "name": "Microsoft SwiftKey",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#00A4EF",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.13.14.5",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
       "name": "Unlock membership",
       "description": "Forces the VIP flag to true so premium features are unlocked client-side. Server-validated assets (cloud effects/templates) are not affected.",
       "default": true,
@@ -339,24 +91,6 @@
             {
               "version": "9.1.8",
               "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.7",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.2",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "8.7.5",
-              "isExperimental": true,
               "minSdk": null,
               "description": null
             }
@@ -392,22 +126,35 @@
               "isExperimental": false,
               "minSdk": null,
               "description": null
-            },
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "GmsCore Signature and Availability Bypass",
+      "description": "Neutralize the bundled play-services-basement availability/enforce checks: the enforce check returns immediately and the availability result reads SUCCESS (0), so the app runs when GmsCore replaces real GMS. Checks absent from this build must be soft-skipped, not fatal.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.ismaker.android.simsimi",
+          "name": "SimSimi",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#FFD93A",
+          "signatures": null,
+          "targets": [
             {
-              "version": "9.1.7",
+              "version": "9.1.9",
               "isExperimental": false,
               "minSdk": null,
               "description": null
             },
             {
-              "version": "9.1.2",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "8.7.5",
-              "isExperimental": true,
+              "version": "9.1.8",
+              "isExperimental": false,
               "minSdk": null,
               "description": null
             }
@@ -441,24 +188,6 @@
             {
               "version": "9.1.8",
               "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.7",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.2",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "8.7.5",
-              "isExperimental": true,
               "minSdk": null,
               "description": null
             }
@@ -495,24 +224,6 @@
             {
               "version": "9.1.8",
               "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.7",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.2",
-              "isExperimental": true,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "8.7.5",
-              "isExperimental": true,
               "minSdk": null,
               "description": null
             }
