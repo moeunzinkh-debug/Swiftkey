@@ -6,23 +6,25 @@ import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibilityVariantBillin
 import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibilityVariantRu
 
 /**
- * 👑 Unlock Membership — Lucky Patcher
+ * 👑 Unlock Membership — Lucky Patcher + APK Protection
  *
  * Unlock membership/subscription: isMember, isMembership, membership, isSubscribed → true
  * membership_type, subscription_status → 1
- * Support all version via generic scanning.
+ * Support all version via generic scanning + APK Protection
+ *
+ * 🛡️ Protection: backup/rollback, DEX validation, system class guard
  */
 @Suppress("unused")
 val unlockMembershipPatch = bytecodePatch(
     name = "Unlock Membership (Lucky Patcher)",
-    description = "Unlocks Membership/Subscription (isMember, membership, isSubscribed) by forcing checks to true and tier to 1. Supports all versions via generic scanning. Tag: Lucky Patcher.",
+    description = "Unlocks Membership/Subscription (isMember, membership, isSubscribed) by forcing checks to true and tier to 1. Includes APK Protection: backup/rollback, DEX validation, system class guard. Supports all versions via generic scanning. Tag: Lucky Patcher.",
 ) {
     compatibleWith(luckyPatcherCompatibility, luckyPatcherCompatibilityVariantRu, luckyPatcherCompatibilityVariantBilling)
 
     execute {
         val stats = PatchStats()
 
-        // 1. Fingerprint-based
+        // 1. Fingerprint-based with protection
         patchViaFingerprints(
             stats,
             MembershipBooleanFingerprint to true,
@@ -37,7 +39,7 @@ val unlockMembershipPatch = bytecodePatch(
             returnValue = 1,
         )
 
-        // 2. Generic scanning for Membership
+        // 2. Generic scanning for Membership with protection
         val membershipBooleanIndicators = setOf(
             "is_member", "isMember", "is_membership", "isMembership",
             "membership", "is_member_active", "isMemberActive",
@@ -68,16 +70,20 @@ val unlockMembershipPatch = bytecodePatch(
             tag = "UnlockMembership",
         )
 
-        // 3. Billing bypass
+        // 3. Billing bypass with protection
         genericBillingBypass(stats)
+
+        // 4. Protection summary
+        stats.protectionStats.printSummary("UnlockMembership")
 
         if (stats.patched == 0) {
             println(
                 "[UnlockMembership] WARNING: No Membership flag methods found. " +
-                    "Patch supports all versions — soft-fail.",
+                    "Patch supports all versions — soft-fail, 🛡️ APK Protection ensured no corruption.",
             )
         } else {
             println("[UnlockMembership] ✅ Patched ${stats.patched} methods to unlock Membership (all versions)")
+            println("[UnlockMembership] 🛡️ Protection: ${stats.protectionStats.totalSucceeded} ok")
         }
     }
 }

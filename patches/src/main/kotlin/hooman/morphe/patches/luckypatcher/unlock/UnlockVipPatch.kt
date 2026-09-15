@@ -4,35 +4,41 @@ import app.morphe.patcher.patch.bytecodePatch
 import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibility
 import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibilityVariantBilling
 import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibilityVariantRu
+import hooman.morphe.patches.luckypatcher.support.createLuckyPatcherProtection
+import hooman.morphe.patches.support.*
 
 /**
- * 🌟 Unlock VIP (All-in-One) — Lucky Patcher
+ * 🌟 Unlock VIP (All-in-One) — Lucky Patcher + APK Protection
  *
- * បំណះនេះជា All-in-One សម្រាប់ Lucky Patcher tag:
+ * បំណះនេះជា All-in-One សម្រាប់ Lucky Patcher tag + ប្រព័ន្ធការពារ APK:
  * - Unlock VIP: isVip, vip_user, has_vip, vip_status → true, vip_level → 1/999
  * - Unlock Pro: isPro, pro_user, pro_version → true
  * - Unlock Premium: isPremium, premium_user → true
  * - Unlock Membership: isMember, membership, isSubscribed → true
  * - Billing/License Bypass: isPurchased, isLicensed, LICENSED → true/0
  *
- * Support all version: ប្រើ generic scanning + fingerprint soft-fail
- * មិនថាខេត្ត APK 9.1.8 ឬ 11.3.9 ឬ R8 obfuscated ក៏ដោយ — patch នឹងរក method
- * ដែលមាន string សម្គាល់ VIP/Pro/Premium/Membership ហើយ force return true.
+ * 🛡️ APK Protection:
+ * - Backup method មុន patch, rollback បើខូច
+ * - Validate DEX integrity ក្រោយ patch
+ * - System class guard (មិន patch android.*, java.*)
+ * - Limit 50 patches per class ដើម្បីកុំឲ្យ DEX blow-up
+ * - Safe register usage (v0)
+ * - Preserve try-catch blocks
  *
- * Tag: Lucky Patcher
- * List menu: បង្ហាញក្នុង Morphe Manager ក្រោម Lucky Patcher
+ * Support all version: generic scanning + fingerprint soft-fail
  */
 @Suppress("unused")
 val unlockVipPatch = bytecodePatch(
     name = "Unlock VIP / Pro / Premium / Membership (Lucky Patcher)",
-    description = "All-in-one unlock for VIP, Pro, Premium, Membership via Lucky Patcher style. Forces all VIP/Pro/Premium/Membership boolean checks to true, levels to 1, and bypasses billing/license checks. Supports ALL versions via generic scanning — no hard fingerprint, soft-fail safe. Tag: Lucky Patcher.",
+    description = "All-in-one unlock for VIP, Pro, Premium, Membership via Lucky Patcher style. Forces all VIP/Pro/Premium/Membership boolean checks to true, levels to 1, and bypasses billing/license checks. Includes APK Protection: backup/rollback, DEX validation, system class guard, 50 patches/class limit. Supports ALL versions via generic scanning — no hard fingerprint, soft-fail safe. Tag: Lucky Patcher.",
 ) {
     compatibleWith(luckyPatcherCompatibility, luckyPatcherCompatibilityVariantRu, luckyPatcherCompatibilityVariantBilling)
 
     execute {
         val stats = PatchStats()
+        val protection = createLuckyPatcherProtection()
 
-        // ---- 1. Fingerprint-based patching (best-effort) ----
+        // ---- 1. Fingerprint-based patching (best-effort) with protection ----
         patchViaFingerprints(
             stats,
             VipBooleanFingerprint to true,
@@ -49,28 +55,50 @@ val unlockVipPatch = bytecodePatch(
             returnValue = 1,
         )
 
-        // License check returns 0 = LICENSED for Google LVL
+        // License check returns 0 = LICENSED for Google LVL — with protection
         LicenseCheckFingerprint.methodOrNull?.let { method ->
-            if (method.implementation != null) {
-                val methodKey = "${method.definingClass}->${method.name}${method.parameterTypes}${method.returnType}"
-                if (methodKey !in stats.alreadyPatched) {
-                    try {
-                        if (method.returnType == "I") {
-                            method.addInstructions(0, "const/4 v0, 0x0\nreturn v0") // LICENSED = 0
-                        } else if (method.returnType == "Z") {
-                            method.addInstructions(0, "const/4 v0, 0x1\nreturn v0")
-                        }
-                        stats.patched++
-                        stats.alreadyPatched.add(methodKey)
-                        println("[UnlockVIP] Patched license check via fingerprint -> $method")
-                    } catch (e: Exception) {
-                        println("[UnlockVIP] Failed license patch $method: ${e.message}")
-                    }
+            val impl = method.implementation ?: return@let
+            val classType = method.definingClass
+            val methodKey = "${classType}->${method.name}${method.parameterTypes}${method.returnType}"
+
+            if (methodKey in stats.alreadyPatched) return@let
+            if (!protection.isSafeToPatchMethod(method, classType)) {
+                println("[UnlockVIP] 🛡️ Skipped unsafe license method $methodKey")
+                return@let
+            }
+
+            try {
+                val backupManager = protection.getBackupManager()
+                backupManager.backup(methodKey, method)
+
+                val mutableClass = try {
+                    mutableClassDefBy(classDefBy(classType) ?: return@let)
+                } catch (_: Exception) {
+                    return@let
                 }
+
+                val mutableMethod = mutableClass.methods.firstOrNull { m ->
+                    m.name == method.name && m.returnType == method.returnType && m.parameterTypes.size == method.parameterTypes.size
+                } ?: return@let
+
+                val patchCode = if (method.returnType == "I") "const/4 v0, 0x0\nreturn v0" else "const/4 v0, 0x1\nreturn v0"
+                val success = SafePatcher.safeAddInstructions(mutableMethod, 0, patchCode, backupManager, methodKey)
+
+                if (success && DexIntegrityChecker.validateMethodAfterPatch(mutableMethod, classType)) {
+                    stats.patched++
+                    stats.alreadyPatched.add(methodKey)
+                    stats.protectionStats.recordSuccess(classType)
+                    println("[UnlockVIP] ✅ Patched license check via fingerprint -> $method")
+                } else {
+                    stats.protectionStats.recordFailure()
+                }
+            } catch (e: Exception) {
+                stats.protectionStats.recordFailure()
+                println("[UnlockVIP] ❌ Failed license patch $method: ${e.message}")
             }
         }
 
-        // ---- 2. Generic scanning — comprehensive indicators ----
+        // ---- 2. Generic scanning — comprehensive indicators with protection ----
         val allBooleanIndicators = setOf(
             // VIP
             "is_vip", "isVip", "is_vip_user", "isVipUser", "vip_user", "is_vip_status",
@@ -125,14 +153,17 @@ val unlockVipPatch = bytecodePatch(
             tag = "UnlockVIP-All",
         )
 
-        // ---- 3. Billing & License bypass (extra) ----
+        // ---- 3. Billing & License bypass (extra) with protection ----
         genericBillingBypass(stats)
 
-        // ---- 4. Extra: patch methods returning String like getMembershipStatus -> "premium" ----
-        // This is optional but helps for some apps that check string status
+        // ---- 4. Extra: patch methods returning String like getMembershipStatus -> "premium" with protection ----
         try {
             getAllClassesWithStrings().forEach { classDef ->
-                if (classDef.type.startsWith("Lapp/morphe/extension/")) return@forEach
+                val classType = classDef.type
+                if (classType.startsWith("Lapp/morphe/extension/")) return@forEach
+                if (MethodValidator.isSystemClass(classType)) return@forEach
+                if (protection.getStats().isClassOverLimit(classType, 50)) return@forEach
+
                 val mutableClass = try {
                     mutableClassDefBy(classDef)
                 } catch (_: Exception) {
@@ -146,8 +177,9 @@ val unlockVipPatch = bytecodePatch(
                         com.android.tools.smali.dexlib2.AccessFlags.NATIVE.isSet(originalMethod.accessFlags)
                     ) return@forEach
 
-                    val methodKey = "${classDef.type}->${originalMethod.name}${originalMethod.parameterTypes}${originalMethod.returnType}"
+                    val methodKey = "${classType}->${originalMethod.name}${originalMethod.parameterTypes}${originalMethod.returnType}"
                     if (methodKey in stats.alreadyPatched) return@forEach
+                    if (!protection.isSafeToPatchMethod(originalMethod, classType)) return@forEach
 
                     val methodNameLower = originalMethod.name.lowercase()
                     val isStatusMethod = methodNameLower.contains("vip") ||
@@ -167,27 +199,47 @@ val unlockVipPatch = bytecodePatch(
                     } ?: return@forEach
 
                     try {
-                        // Return "premium" or "vip" string for status methods
-                        mutableMethod.addInstructions(0, "const-string v0, \"premium\"\nreturn-object v0")
-                        stats.patched++
-                        stats.alreadyPatched.add(methodKey)
-                    } catch (_: Exception) {}
+                        val backupManager = protection.getBackupManager()
+                        backupManager.backup(methodKey, originalMethod)
+
+                        val success = SafePatcher.safeAddInstructions(
+                            mutableMethod,
+                            0,
+                            "const-string v0, \"premium\"\nreturn-object v0",
+                            backupManager,
+                            methodKey,
+                        )
+
+                        if (success && DexIntegrityChecker.validateMethodAfterPatch(mutableMethod, classType)) {
+                            stats.patched++
+                            stats.alreadyPatched.add(methodKey)
+                            stats.protectionStats.recordSuccess(classType)
+                        } else {
+                            stats.protectionStats.recordFailure()
+                        }
+                    } catch (_: Exception) {
+                        stats.protectionStats.recordFailure()
+                    }
                 }
             }
         } catch (_: Exception) {
             // ignore
         }
 
-        // ---- 5. Result handling ----
+        // ---- 5. Result handling + Protection Summary ----
+        stats.protectionStats.printSummary("UnlockVIP")
+        protection.printSummary("UnlockVIP")
+
         if (stats.patched == 0) {
             println(
                 "[UnlockVIP] WARNING: No VIP/Pro/Premium/Membership methods found to patch. " +
                     "This build may use server-side validation or completely different flag names. " +
                     "Patch supports ALL versions via generic scanning — soft-fail, no crash. " +
-                    "Client-side features remain locked if no flags found.",
+                    "🛡️ APK Protection ensured no corruption — APK remains valid.",
             )
         } else {
             println("[UnlockVIP] ✅ Patched ${stats.patched} methods — VIP/Pro/Premium/Membership unlocked! (All versions supported)")
+            println("[UnlockVIP] 🛡️ APK Protection: ${stats.protectionStats.totalSucceeded} succeeded, ${stats.protectionStats.totalFailed} failed, ${stats.protectionStats.totalSkippedSystem} system skipped, ${stats.protectionStats.totalSkippedAlreadyPatched} already patched skipped")
         }
     }
 }

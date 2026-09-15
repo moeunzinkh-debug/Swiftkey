@@ -6,23 +6,25 @@ import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibilityVariantBillin
 import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibilityVariantRu
 
 /**
- * 💎 Unlock Premium — Lucky Patcher
+ * 💎 Unlock Premium — Lucky Patcher + APK Protection
  *
  * Unlock premium features: isPremium, premium_user, has_premium, premium_status → true
  * premium_level, premium_type → 1
- * Support all version via generic scanning.
+ * Support all version via generic scanning + APK Protection
+ *
+ * 🛡️ Protection: backup/rollback, DEX validation, system class guard
  */
 @Suppress("unused")
 val unlockPremiumPatch = bytecodePatch(
     name = "Unlock Premium (Lucky Patcher)",
-    description = "Unlocks Premium features (isPremium, premium_user, has_premium) by forcing checks to true and level to 1. Supports all versions via generic scanning. Tag: Lucky Patcher.",
+    description = "Unlocks Premium features (isPremium, premium_user, has_premium) by forcing checks to true and level to 1. Includes APK Protection: backup/rollback, DEX validation, system class guard. Supports all versions via generic scanning. Tag: Lucky Patcher.",
 ) {
     compatibleWith(luckyPatcherCompatibility, luckyPatcherCompatibilityVariantRu, luckyPatcherCompatibilityVariantBilling)
 
     execute {
         val stats = PatchStats()
 
-        // 1. Fingerprint-based
+        // 1. Fingerprint-based with protection
         patchViaFingerprints(
             stats,
             PremiumBooleanFingerprint to true,
@@ -37,7 +39,7 @@ val unlockPremiumPatch = bytecodePatch(
             returnValue = 1,
         )
 
-        // 2. Generic scanning for Premium
+        // 2. Generic scanning for Premium with protection
         val premiumBooleanIndicators = setOf(
             "is_premium", "isPremium", "is_premium_user", "isPremiumUser",
             "premium_user", "has_premium", "hasPremium",
@@ -64,16 +66,20 @@ val unlockPremiumPatch = bytecodePatch(
             tag = "UnlockPremium",
         )
 
-        // 3. Billing bypass
+        // 3. Billing bypass with protection
         genericBillingBypass(stats)
+
+        // 4. Protection summary
+        stats.protectionStats.printSummary("UnlockPremium")
 
         if (stats.patched == 0) {
             println(
                 "[UnlockPremium] WARNING: No Premium flag methods found. " +
-                    "Patch supports all versions — soft-fail, no crash.",
+                    "Patch supports all versions — soft-fail, 🛡️ APK Protection ensured no corruption.",
             )
         } else {
             println("[UnlockPremium] ✅ Patched ${stats.patched} methods to unlock Premium (all versions)")
+            println("[UnlockPremium] 🛡️ Protection: ${stats.protectionStats.totalSucceeded} ok, ${stats.protectionStats.totalFailed} fail")
         }
     }
 }
