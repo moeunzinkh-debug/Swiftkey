@@ -13,7 +13,7 @@
 ## 🩹 បញ្ជី patches ក្នុង source បច្ចុប្បន្ន
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.1.1](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.1.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`arena/01a0a349-swiftkey`&nbsp;&nbsp;•&nbsp;&nbsp;2 patches total
+> **[v1.2.0-dev.1](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.2.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;2 patches total
 <details open>
 <summary>📦 Microsoft SwiftKey&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
