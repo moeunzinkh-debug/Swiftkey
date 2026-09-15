@@ -1,0 +1,19 @@
+import com.android.build.api.dsl.ApplicationExtension
+
+extension {
+    name = "extensions/simsimi.mpe"
+}
+
+configure<ApplicationExtension> {
+    namespace = "app.morphe.extension.simsimi"
+    compileSdk = 36
+
+    defaultConfig {
+        minSdk = 26
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
