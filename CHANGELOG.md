@@ -1,3 +1,9 @@
+## [1.4.3](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.2...v1.4.3) (2026-09-15)
+
+### 🐛 Bug Fixes
+
+* **simsimi:** avoid smali compile crash in microg account hook ([22dd4ca](https://github.com/moeunzinkh-debug/Swiftkey/commit/22dd4ca1e5efa836d7cdd9395eeb7a8bd811a6a6))
+
 ## [1.4.2](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.1...v1.4.2) (2026-09-15)
 
 ### 🐛 Bug Fixes
