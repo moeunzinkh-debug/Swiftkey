@@ -257,6 +257,12 @@
           "signatures": null,
           "targets": [
             {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
               "version": "11.3.9",
               "isExperimental": false,
               "minSdk": null,
@@ -351,6 +357,12 @@
           "signatures": null,
           "targets": [
             {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
               "version": "11.3.9",
               "isExperimental": false,
               "minSdk": null,
@@ -378,6 +390,12 @@
           "appIconColor": "#F7D000",
           "signatures": null,
           "targets": [
+            {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
             {
               "version": "10.8.9",
               "isExperimental": false,
@@ -410,6 +428,12 @@
           "signatures": null,
           "targets": [
             {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
               "version": "11.3.9",
               "isExperimental": false,
               "minSdk": null,
@@ -504,6 +528,12 @@
           "signatures": null,
           "targets": [
             {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
               "version": "11.3.9",
               "isExperimental": false,
               "minSdk": null,
@@ -531,6 +561,12 @@
           "appIconColor": "#F7D000",
           "signatures": null,
           "targets": [
+            {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
             {
               "version": "10.8.9",
               "isExperimental": false,
@@ -563,6 +599,12 @@
           "signatures": null,
           "targets": [
             {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
               "version": "11.3.9",
               "isExperimental": false,
               "minSdk": null,
@@ -657,6 +699,12 @@
           "signatures": null,
           "targets": [
             {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
               "version": "11.3.9",
               "isExperimental": false,
               "minSdk": null,
@@ -684,6 +732,12 @@
           "appIconColor": "#F7D000",
           "signatures": null,
           "targets": [
+            {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
             {
               "version": "10.8.9",
               "isExperimental": false,
@@ -716,6 +770,12 @@
           "signatures": null,
           "targets": [
             {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
               "version": "11.3.9",
               "isExperimental": false,
               "minSdk": null,
@@ -810,6 +870,12 @@
           "signatures": null,
           "targets": [
             {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
               "version": "11.3.9",
               "isExperimental": false,
               "minSdk": null,
@@ -837,6 +903,12 @@
           "appIconColor": "#F7D000",
           "signatures": null,
           "targets": [
+            {
+              "version": "12.10.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
             {
               "version": "10.8.9",
               "isExperimental": false,

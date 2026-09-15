@@ -31,6 +31,23 @@ jobs:
       - name: Test back-merge script
         run: bash .github/scripts/test-backmerge-main-to-dev.sh
 
+      # ត្រួតពិនិត្យ marker របស់ README មុនពេល release — generate_patches_readme.py
+      # ចេញ exit 1 បើ <!-- PATCHES_END --> បាត់ ហើយវានៅក្នុង prepareCmd របស់
+      # semantic-release ដូច្នេះ release ទាំងមូលនឹងបរាជ័យ។ កំហុសនេះធ្លាប់កើតហើយ
+      # (commit "Change Readme" លុប marker ចេញដោយដៃ) — ចាប់វានៅទីនេះជាមុនសិន។
+      - name: Verify README patch markers
+        run: |
+          set -euo pipefail
+          if ! grep -qE '<!-- PATCHES_START( EXPANDED)? -->' README.md; then
+            echo "::error::README.md បាត់ <!-- PATCHES_START --> — សូមដាក់វាត្រឡប់មុនពេលចេញ release"
+            exit 1
+          fi
+          if ! grep -qF '<!-- PATCHES_END -->' README.md; then
+            echo "::error::README.md បាត់ <!-- PATCHES_END --> — សូមដាក់វាត្រឡប់មុនពេលចេញ release"
+            exit 1
+          fi
+          echo "✅ README markers intact"
+
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -157,6 +174,10 @@ jobs:
       #    ដូច្នេះបើវាបរាជ័យ ក៏ release + .mpp + attestation + artifact បានចេញរួចហើយដែរ។
       #    មុននេះវាជា plugin `success` របស់ semantic-release ដូច្នេះ conflict នៅ dev
       #    ធ្វើឲ្យ step "Release" បរាជ័យ ហើយ Attest/Upload .mpp ត្រូវរំលងទាំងស្រុង។
+      #    Conflict លើឯកសារ release (CHANGELOG/README/gradle.properties/patches-*.json)
+      #    ត្រូវបានដោះស្រាយដោយរក្សាទុកកំណែរបស់ dev។ ចំណែកឯកសារប្រភពដែល dev សរសេរ
+      #    ឡើងវិញដោយចេតនា (ឧ. MicSupport.java) ត្រូវបានចុះបញ្ជី allow-list នៅក្នុង
+      #    ស្គ្រីប — ក្រៅពីនោះស្គ្រីបឈប់ ហើយបញ្ចេញ ::error:: ឲ្យមនុស្សសម្រេចចិត្ត។
       - name: Back-merge main into dev
         if: steps.release.outputs.new_release_published == 'true' && github.ref_name == 'main'
         run: bash .github/scripts/backmerge-main-to-dev.sh
