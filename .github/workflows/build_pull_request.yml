@@ -17,6 +17,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # សាកស្គ្រីប back-merge មុនអ្វីទាំងអស់ (រហ័ស មិនត្រូវការ Java/Node)។
+      # ការធ្វើតេស្ដនេះហើយដែលប្រាប់ថា conflict ប្រភេទ modify/delete នៅ dev ត្រូវបានដោះស្រាយ។
+      - name: Test back-merge script
+        run: bash .github/scripts/test-backmerge-main-to-dev.sh
+
       - name: Setup Java
         uses: actions/setup-java@v5
         with:

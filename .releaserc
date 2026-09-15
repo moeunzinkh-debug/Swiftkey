@@ -73,10 +73,6 @@
         ],
         "successComment": false
       }
-    ],
-    [
-      "./.github/scripts/semantic-release-backmerge.cjs",
-      {}
     ]
   ]
 }
