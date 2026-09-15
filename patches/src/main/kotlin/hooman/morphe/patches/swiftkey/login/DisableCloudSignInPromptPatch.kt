@@ -4,6 +4,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
+import hooman.morphe.patches.swiftkey.support.unsupportedSwiftKeyVersion
 import hooman.morphe.patches.swiftkey.swiftKeyCompatibility
 import org.w3c.dom.Element
 
@@ -45,6 +46,10 @@ val disableCloudSignInPromptPatch = bytecodePatch(
     execute {
         // This helper is used only for automatic onboarding launches. Manual Account settings invoke
         // the sign-in flow directly, so they and real account state remain untouched.
-        CloudSignInPromptFingerprint.method.addInstructions(0, "return-void")
+        val method = CloudSignInPromptFingerprint.methodOrNull ?: throw unsupportedSwiftKeyVersion(
+            "the automatic cloud sign-in helper",
+            "CloudSignInPromptFingerprint",
+        )
+        method.addInstructions(0, "return-void")
     }
 }
