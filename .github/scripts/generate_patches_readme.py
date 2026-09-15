@@ -41,10 +41,17 @@ def pkg_emoji(pkg):
     """Return a standard package emoji regardless of the package name."""
     return "📦"
 
-# Group patches by package; patches with no compatiblePackages are universal.
+# Group patches by app; patches with no compatiblePackages are universal.
 # JSON structure: compatiblePackages is a list of objects with
 # { packageName, name, targets: [{ version, isExperimental, description }] }
-by_pkg = {}   # packageName -> { name, emoji, patches, targets }
+#
+# Grouping key is the app LABEL, not the packageName. One app can legitimately declare several
+# package names (Lucky Patcher ships randomized installer packages such as `ru.byn4ik.lp` or
+# `ru.sxbuIDfx.pFSOyagrF` next to `com.chelpus.lackypatch`). Keying by packageName rendered one
+# identical "📦 Lucky Patcher • 4 patches" spoiler per variant, and it also inflated the
+# "N patches total" header (the same 4 patches counted once per package). Merging by label keeps
+# a single spoiler per app and unions the supported versions of all its packages.
+by_pkg = {}   # app label -> { name, emoji, packages, patches, targets }
 universal = {}
 
 for patch in data["patches"]:
@@ -57,16 +64,27 @@ for patch in data["patches"]:
     for pkg_entry in cp:
         pkg  = pkg_entry["packageName"]
         name = pkg_entry.get("name") or pkg  # fall back to package name if no label
-        if pkg not in by_pkg:
-            by_pkg[pkg] = {
-                "name":    name,
-                "emoji":   pkg_emoji(pkg),
-                "patches": {},
-                "targets": pkg_entry.get("targets", []),
+        if name not in by_pkg:
+            by_pkg[name] = {
+                "name":     name,
+                "emoji":    pkg_emoji(pkg),
+                "packages": [],
+                "patches":  {},
+                "targets":  [],
             }
+        entry = by_pkg[name]
+        if pkg not in entry["packages"]:
+            entry["packages"].append(pkg)
+        # Union the targets of every package variant, keeping declaration order (newest first)
+        # and one row per version — a version listed by two variants is still one version.
+        for target in pkg_entry.get("targets", []):
+            if target.get("version") is None:
+                continue
+            if not any(t["version"] == target["version"] for t in entry["targets"]):
+                entry["targets"].append(target)
         # Deduplicate patches that appear across multiple packages
-        if patch["name"] not in by_pkg[pkg]["patches"]:
-            by_pkg[pkg]["patches"][patch["name"]] = patch
+        if patch["name"] not in entry["patches"]:
+            entry["patches"][patch["name"]] = patch
 
 
 def anchor(name):
