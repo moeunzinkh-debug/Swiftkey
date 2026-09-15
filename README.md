@@ -10,9 +10,9 @@
 ## 🩹 បញ្ជី​បំណះ
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.1.1](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.1.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;8 patches total
-<details open>
-<summary>📦 Microsoft SwiftKey&nbsp;&nbsp;•&nbsp;&nbsp;8 patches</summary>
+> **[v1.4.0](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.4.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;8 patches total
+<details>
+<summary>📦 Microsoft SwiftKey&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -22,14 +22,28 @@
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Disable cloud sign-in prompt](#disable-cloud-sign-in-prompt) | Keeps the optional Microsoft cloud sign-in onboarding from replacing SwiftKey's launcher, so local keyboard setup and settings remain usable without an account. This does not sign in or unlock cloud sync and other account-backed features. |  |
 | [Disable telemetry](#disable-telemetry) | Stops SwiftKey's first-party telemetry records and uploads, Adjust attribution, Crashlytics, Firebase Sessions, legacy Google Analytics, and app exception reporting. Push messaging and the multipurpose job service stay enabled. |  |
 | [Fix microphone voice input](#fix-microphone-voice-input) | Makes the microphone button work like on Gboard without installing Google: SwiftKey's speech checks stop hard-requiring the Google app and any Android RecognitionService (the system default, e.g. Kõnele/Vosk offline or Speech Recognition & Synthesis) is used. Install and set a speech recognition provider in system settings first; the patch only removes the Google gate, it does not ship a speech engine. |  |
-| [GmsCore Bytecode Redirect (MicroG RE 7.1.2)](#gmscore-bytecode-redirect-microg-re-7-1-2) | Rewires the app's Google Play Services references (GMS package name, account vendor, c2dm/GMS permissions and provider authorities) to MicroG RE's GmsCore package app.revanced.android.gms. Service intent actions are kept literal because GmsCore serves them under the original names. Enable together with the other GmsCore patches. |  |
-| [GmsCore Signature and Availability Bypass](#gmscore-signature-and-availability-bypass) | Stops the bundled Google Play Services availability/version checks from blocking the app when Google Play Services is absent and GmsCore (MicroG RE) takes its place: the enforce check returns immediately and the availability result reads SUCCESS (0). Checks that this build does not include are skipped instead of failing. |  |
-| [GmsCore support (MicroG RE)](#gmscore-support-microg-re) | Umbrella patch for devices running MicroG RE (app.revanced.android.gms) instead of Google Play Services. Pulls in: GmsCore bytecode redirect, GmsCore signature and availability bypass, MicroG account permissions and clone process-name spoofing, plus the manifest queries/permissions they need. Requires MicroG RE 7.x installed; it does not provide Microsoft account/cloud features. | • Original signing certificate SHA-1 (cloned builds only) |
-| [MicroG Account Permissions](#microg-account-permissions) | Requests the GmsCore account permissions (GET_ACCOUNTS and app.revanced.gms.EXTENDED_ACCESS) at runtime the first time a SwiftKey activity starts, so account access works against MicroG RE without an ADB helper. Does nothing when no GmsCore is installed. |  |
-| [Process Name Spoofing for Clone Support](#process-name-spoofing-for-clone-support) | For cloned builds (package suffix such as .morphe), strips the clone suffix from the process name the app reads through Application.getProcessName()/ActivityThread, so process-name based routing behaves exactly like the original install. No-op on normal, uncloned builds. |  |
+
+</details>
+
+<details>
+<summary>📦 SimSimi&nbsp;&nbsp;•&nbsp;&nbsp;6 patches</summary>
+<br>
+
+**🎯 Supported versions:**
+
+| 9.1.9 | 9.1.8 |
+| :---: | :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [GmsCore Bytecode Redirect (MicroG RE)](#gmscore-bytecode-redirect-microg-re) | Rewire all Google Play Services references to MicroG RE's GmsCore package `app.revanced.android.gms`: GMS package-name string constants, account vendor strings, c2dm/GMS permissions and provider authorities. Keep service intent ACTIONS literal (GmsCore serves them under the original names). |  |
+| [GmsCore Signature and Availability Bypass](#gmscore-signature-and-availability-bypass) | Neutralize the bundled play-services-basement availability/enforce checks: the enforce check returns immediately and the availability result reads SUCCESS (0), so the app runs when GmsCore replaces real GMS. Checks absent from this build must be soft-skipped, not fatal. |  |
+| [GmsCore support (MicroG RE)](#gmscore-support-microg-re) | Umbrella patch pulling in 2+3+4 plus the shared manifest patch: <queries> visibility for GmsCore/speech services, account permissions, c2dm permission rename. Option: "Original signing certificate SHA-1" (cloned builds only). Requires MicroG RE 7.x installed. | • Original signing certificate SHA-1 |
+| [MicroG Account Permissions](#microg-account-permissions) | Request GmsCore account permissions at runtime once (GET_ACCOUNTS and `app.revanced.gms.EXTENDED_ACCESS`) the first time any app activity starts, using a structural Activity-superclass walk (R8-name independent). No-op when no GmsCore is installed. |  |
+| [Remove ads](#remove-ads) | Removes ads, banners, interstitials, rewarded ads from SimSimi. Blocks AdMob, Unity Ads, AppLovin, IronSource and other ad SDKs client-side. |  |
+| [Unlock membership](#unlock-membership) | Forces the VIP flag to true so premium features are unlocked client-side. Server-validated assets (cloud effects/templates) are not affected. |  |
 
 </details>
 
