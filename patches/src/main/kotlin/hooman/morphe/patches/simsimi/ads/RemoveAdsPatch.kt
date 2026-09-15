@@ -74,29 +74,18 @@ val removeAdsPatch = bytecodePatch(
                             patched++
                         }
                         returnType == "Z" -> {
-                            val code = if (isStatic && !hasParams) {
-                                "const/4 v0, 0x0\nreturn v0"
-                            } else {
-                                "const/4 p0, 0x0\nreturn p0"
-                            }
+                            // ប្រើ v0 ជានិច្ច — កុំ overwrite p0 (this) ក្នុង instance method
+                            val code = "const/4 v0, 0x0\nreturn v0"
                             method.addInstructions(0, code)
                             patched++
                         }
                         returnType == "I" || returnType == "F" -> {
-                            val code = if (isStatic && !hasParams) {
-                                "const/4 v0, 0x0\nreturn v0"
-                            } else {
-                                "const/4 p0, 0x0\nreturn p0"
-                            }
+                            val code = "const/4 v0, 0x0\nreturn v0"
                             method.addInstructions(0, code)
                             patched++
                         }
                         returnType.startsWith("L") || returnType.startsWith("[") -> {
-                            val code = if (isStatic && !hasParams) {
-                                "const/4 v0, 0x0\nreturn-object v0"
-                            } else {
-                                "const/4 p0, 0x0\nreturn-object p0"
-                            }
+                            val code = "const/4 v0, 0x0\nreturn-object v0"
                             method.addInstructions(0, code)
                             patched++
                         }
@@ -159,11 +148,19 @@ val removeAdsPatch = bytecodePatch(
             if (adPackagePrefixes.any { classDef.type.startsWith(it) }) return@forEach
             if (classDef.type.startsWith("Lapp/morphe/extension/")) return@forEach
 
-            classDef.methods.forEach { method ->
-                val impl = method.implementation ?: return@forEach
-                if (AccessFlags.ABSTRACT.isSet(method.accessFlags) || AccessFlags.NATIVE.isSet(method.accessFlags)) return@forEach
+            // classDef ពី getAllClassesWithStrings() អាចជា immutable — យក mutable version
+            // ដើម្បីអាចកែ implementation បាន (addInstructions ត្រូវការ MutableMethod)
+            val mutableClass = try {
+                mutableClassDefBy(classDef)
+            } catch (_: Exception) {
+                return@forEach
+            }
 
-                val methodSig = "${classDef.type}->${method.name}${method.parameterTypes}${method.returnType}"
+            classDef.methods.forEach { originalMethod ->
+                val impl = originalMethod.implementation ?: return@forEach
+                if (AccessFlags.ABSTRACT.isSet(originalMethod.accessFlags) || AccessFlags.NATIVE.isSet(originalMethod.accessFlags)) return@forEach
+
+                val methodSig = "${classDef.type}->${originalMethod.name}${originalMethod.parameterTypes}${originalMethod.returnType}"
                 if (methodSig in alreadyPatchedSignatures) return@forEach
 
                 // Collect string constants in method
@@ -188,39 +185,40 @@ val removeAdsPatch = bytecodePatch(
                 if (!hasStrongAdString) return@forEach
 
                 // Heuristic: only patch methods that look like ad show/load/isAvailable
-                val returnType = method.returnType
-                val isStatic = AccessFlags.STATIC.isSet(method.accessFlags)
-                val hasParams = method.parameterTypes.isNotEmpty()
+                val returnType = originalMethod.returnType
+                val isStatic = AccessFlags.STATIC.isSet(originalMethod.accessFlags)
+                val hasParams = originalMethod.parameterTypes.isNotEmpty()
+
+                // រក mutable method ត្រូវគ្នា
+                val mutableMethod = mutableClass.methods.firstOrNull { candidate ->
+                    candidate.name == originalMethod.name &&
+                        candidate.returnType == originalMethod.returnType &&
+                        candidate.parameterTypes.size == originalMethod.parameterTypes.size &&
+                        candidate.parameterTypes.zip(originalMethod.parameterTypes).all { (a, b) -> a.toString() == b.toString() }
+                } ?: return@forEach
 
                 try {
                     when {
                         returnType == "V" -> {
                             // Void methods that load/show ads -> no-op
-                            method.addInstructions(0, "return-void")
+                            mutableMethod.addInstructions(0, "return-void")
                             patched++
                             alreadyPatchedSignatures.add(methodSig)
                         }
                         returnType == "Z" -> {
                             // Boolean methods like isAdLoaded, shouldShowAd -> false
-                            val code = if (isStatic && !hasParams) {
-                                "const/4 v0, 0x0\nreturn v0"
-                            } else {
-                                "const/4 p0, 0x0\nreturn p0"
-                            }
-                            method.addInstructions(0, code)
+                            // ប្រើ v0 ជានិច្ចដើម្បីជៀសវាង overwrite this (p0) ក្នុង instance method
+                            val code = "const/4 v0, 0x0\nreturn v0"
+                            mutableMethod.addInstructions(0, code)
                             patched++
                             alreadyPatchedSignatures.add(methodSig)
                         }
                         returnType.startsWith("L") || returnType.startsWith("[") -> {
                             // Object returning ad -> null, but be conservative: only if method name suggests ad
-                            val lowerName = method.name.lowercase()
+                            val lowerName = originalMethod.name.lowercase()
                             if (lowerName.contains("ad") || lowerName.contains("banner") || lowerName.contains("interstitial") || lowerName.contains("reward")) {
-                                val code = if (isStatic && !hasParams) {
-                                    "const/4 v0, 0x0\nreturn-object v0"
-                                } else {
-                                    "const/4 p0, 0x0\nreturn-object p0"
-                                }
-                                method.addInstructions(0, code)
+                                val code = "const/4 v0, 0x0\nreturn-object v0"
+                                mutableMethod.addInstructions(0, code)
                                 patched++
                                 alreadyPatchedSignatures.add(methodSig)
                             }
