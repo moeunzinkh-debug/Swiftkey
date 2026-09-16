@@ -47,12 +47,11 @@ def pkg_emoji(pkg):
 #
 # Grouping key = the app's display name, NOT the package name. A single app can be
 # declared through several Compatibility entries when it ships under multiple package
-# names (Lucky Patcher randomises its package: com.chelpus.lackypatch, ru.byn4ik.lp,
-# ru.sxbuIDfx.pFSoyagrF, com.android.vending.billing.InAppBillingService.LUCK). Keying by
-# package rendered one
-# near-identical dropdown per variant, which reads as duplicated content in the README
-# (and was manually deleted once already, breaking the PATCHES_END marker). Merging by
-# name keeps one section per app, with the union of every variant's supported versions.
+# names (some apps randomise or rename their package between builds or distribution
+# channels). Keying by package rendered one near-identical dropdown per variant, which
+# reads as duplicated content in the README (and was manually deleted once already,
+# breaking the PATCHES_END marker). Merging by name keeps one section per app, with the
+# union of every variant's supported versions.
 by_pkg = {}   # display name -> { name, emoji, patches, targets, packages }
 universal = {}
 
