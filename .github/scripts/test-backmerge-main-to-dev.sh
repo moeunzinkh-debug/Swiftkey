@@ -3,6 +3,7 @@ set -euo pipefail
 
 readonly script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly backmerge_script="$script_dir/backmerge-main-to-dev.sh"
+readonly wrapper_script="$script_dir/backmerge-ci.sh"
 readonly fixture_root="$(mktemp -d)"
 readonly -a generated_files=(
   "CHANGELOG.md"
@@ -204,5 +205,32 @@ if git -C "$worker" merge-base --is-ancestor origin/main origin/dev; then
   echo "Aborted back-merge still moved dev." >&2
   exit 1
 fi
+
+# 7) The CI wrapper must propagate the exit status and re-emit the log tail as a single
+#    ::error annotation — the raw Actions log is not reachable through the REST API, which
+#    is why two failed back-merges could only be diagnosed by replaying them locally.
+worker="$(make_fixture wrapper-report diverged-source)"
+wrapper_status=0
+wrapper_output="$(
+  cd "$worker"
+  GITHUB_ACTIONS=true BACKMERGE_REMOTE=origin bash "$wrapper_script" 2>&1
+)" || wrapper_status=$?
+test "$wrapper_status" -eq 1
+grep -q '^::error title=back-merge main into dev failed (exit 1)::' <<<"$wrapper_output"
+grep -q 'Automatic merge failed' <<<"$wrapper_output"
+
+# 8) Same wrapper, happy path: no annotation, exit 0, dev advanced.
+worker="$(make_fixture wrapper-success without-metadata)"
+wrapper_status=0
+wrapper_output="$(
+  cd "$worker"
+  GITHUB_ACTIONS=true BACKMERGE_REMOTE=origin bash "$wrapper_script" 2>&1
+)" || wrapper_status=$?
+test "$wrapper_status" -eq 0
+if grep -q '^::error' <<<"$wrapper_output"; then
+  echo "Successful back-merge emitted an error annotation." >&2
+  exit 1
+fi
+assert_merged "$worker"
 
 echo "back-merge tests passed."
