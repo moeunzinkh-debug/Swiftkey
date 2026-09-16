@@ -37,7 +37,7 @@
     },
     {
       "name": "Fix microphone voice input",
-      "description": "Makes the microphone button work like on Gboard without installing Google: SwiftKey's speech checks stop hard-requiring the Google app and any Android RecognitionService (the system default, e.g. Kõnele/Vosk offline or Speech Recognition & Synthesis) is used. Install and set a speech recognition provider in system settings first; the patch only removes the Google gate, it does not ship a speech engine.",
+      "description": "Makes the microphone button work like on Gboard without installing Google: SwiftKey's speech checks stop hard-requiring the Google app and any Android RecognitionService (the system default, e.g. K\u00f5nele/Vosk offline or Speech Recognition & Synthesis) is used. Install and set a speech recognition provider in system settings first; the patch only removes the Google gate, it does not ship a speech engine.",
       "default": true,
       "dependencies": [
         "ResourcePatch"
@@ -233,6 +233,40 @@
             },
             {
               "version": "9.1.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Text editing toolbar",
+      "description": "Adds a collapsible text editing toolbar inside the keyboard: cursor arrows, Home/End, selection, Select all, Cut, Copy, Paste, Undo and Redo. Actions use the current editor; Undo/Redo depend on that app's support. Does not change login, telemetry or Google services.",
+      "default": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "com.touchtype.swiftkey",
+          "name": "Microsoft SwiftKey",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#00A4EF",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "9.13.14.5",
+              "isExperimental": true,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "9.13.13.5",
               "isExperimental": false,
               "minSdk": null,
               "description": null
