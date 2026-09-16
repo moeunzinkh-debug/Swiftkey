@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-16T02:35:43",
-  "description": "## [1.6.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.5.0...v1.6.0) (2026-09-16)\n\n### 🐛 Bug Fixes\n\n* **ci:** guard README patch markers and merge duplicate app sections ([3cc7653](https://github.com/moeunzinkh-debug/Swiftkey/commit/3cc765341eed6548f9bc4dd5855e5d7cb4b05abe))\n* **ci:** keep dev's rewritten MicSupport.java when back-merging main into dev ([0e2ad72](https://github.com/moeunzinkh-debug/Swiftkey/commit/0e2ad7267d0127a8bfb9939975ea8d3676692798))\n* **ci:** keep the expected-failure back-merge tests from painting the run red ([d9eaccb](https://github.com/moeunzinkh-debug/Swiftkey/commit/d9eaccb54e70078852a689d33e1a1059949501fc)), closes [#19](https://github.com/moeunzinkh-debug/Swiftkey/issues/19)\n\n### ✨ New Features\n\n* **luckypatcher:** declare Lucky Patcher 12.10.8 as a supported target ([d3759a1](https://github.com/moeunzinkh-debug/Swiftkey/commit/d3759a190c416b223201b52f0cb23e4dd045768b))",
-  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.6.0/patches-1.6.0.mpp",
+  "created_at": "2026-09-16T03:57:18",
+  "description": "## [1.6.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.6.0...v1.6.1) (2026-09-16)\n\n### 🐛 Bug Fixes\n\n* **luckypatcher:** support obfuscated package variant ([764497e](https://github.com/moeunzinkh-debug/Swiftkey/commit/764497e5a0569d5e836e01d24db831eb3c289134))",
+  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.6.1/patches-1.6.1.mpp",
   "signature_download_url": "",
-  "version": "1.6.0"
+  "version": "1.6.1"
 }

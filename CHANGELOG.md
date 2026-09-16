@@ -1,3 +1,9 @@
+## [1.6.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.6.0...v1.6.1) (2026-09-16)
+
+### 🐛 Bug Fixes
+
+* **luckypatcher:** support obfuscated package variant ([764497e](https://github.com/moeunzinkh-debug/Swiftkey/commit/764497e5a0569d5e836e01d24db831eb3c289134))
+
 ## [1.6.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.5.0...v1.6.0) (2026-09-16)
 
 ### 🐛 Bug Fixes
