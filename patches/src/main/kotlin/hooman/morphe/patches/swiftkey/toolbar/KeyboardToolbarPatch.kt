@@ -27,58 +27,33 @@ internal val keyboardToolbarPatch = bytecodePatch {
             while (parent != null && parent != IME && seen.add(parent)) {
                 parent = classDefByOrNull(parent)?.superclass
             }
-            if (parent != IME) {
-                println("[KeyboardToolbar] Note: $type is an indirect InputMethodService descendant.")
-            }
+            if (parent != IME) throw PatchException("SwiftKey: $type no longer extends InputMethodService.")
 
-            try {
-                wrapLifecycle(
-                    type, "onCreateInputView", emptyList(), VIEW,
-                    after = """
-                        move-result-object v0
-                        invoke-static {p0, v0}, $TOOLBAR->wrap($IME$VIEW)$VIEW
-                        move-result-object v0
-                        return-object v0
-                    """.trimIndent(),
-                )
-            } catch (e: Exception) {
-                println("[KeyboardToolbar] Warning: onCreateInputView wrapping failed on $type: ${e.message}")
-            }
+            wrapLifecycle(type, "onCreateInputView", emptyList(), VIEW,
+                after = """
+                    move-result-object v0
+                    invoke-static {p0, v0}, $TOOLBAR->wrap($IME$VIEW)$VIEW
+                    move-result-object v0
+                    return-object v0
+                """.trimIndent())
 
             val reset = "invoke-static/range {p0 .. p0}, $TOOLBAR->resetForInput($IME)V"
-            try {
-                wrapLifecycle(type, "onStartInput", listOf("Landroid/view/inputmethod/EditorInfo;", "Z"), "V", before = reset)
-            } catch (e: Exception) {
-                println("[KeyboardToolbar] Warning: onStartInput wrapping skipped on $type: ${e.message}")
-            }
-            try {
-                wrapLifecycle(type, "onFinishInputView", listOf("Z"), "V", before = reset)
-            } catch (e: Exception) {
-                println("[KeyboardToolbar] Warning: onFinishInputView wrapping skipped on $type: ${e.message}")
-            }
-            try {
-                wrapLifecycle(type, "onWindowHidden", emptyList(), "V", before = reset)
-            } catch (e: Exception) {
-                println("[KeyboardToolbar] Warning: onWindowHidden wrapping skipped on $type: ${e.message}")
-            }
-            try {
-                wrapLifecycle(
-                    type, "onComputeInsets", listOf(INSETS), "V",
-                    after = """
-                        invoke-static {p0, p1}, $TOOLBAR->includeToolsInInsets($IME$INSETS)V
-                        return-void
-                    """.trimIndent(),
-                )
-            } catch (e: Exception) {
-                println("[KeyboardToolbar] Warning: onComputeInsets wrapping skipped on $type: ${e.message}")
-            }
+            wrapLifecycle(type, "onStartInput", listOf("Landroid/view/inputmethod/EditorInfo;", "Z"), "V", before = reset)
+            wrapLifecycle(type, "onFinishInputView", listOf("Z"), "V", before = reset)
+            wrapLifecycle(type, "onWindowHidden", emptyList(), "V", before = reset)
+            wrapLifecycle(type, "onComputeInsets", listOf(INSETS), "V",
+                after = """
+                    invoke-static {p0, p1}, $TOOLBAR->includeToolsInInsets($IME$INSETS)V
+                    return-void
+                """.trimIndent())
         }
     }
 }
 
 /**
- * Use a safe wrapper with dedicated registers instead of inserting a multi-register invoke into an
- * arbitrary method. This preserves all original branches/returns and protects against register collisions.
+ * Use a small wrapper with its OWN registers instead of inserting a two-register invoke into an
+ * arbitrary method. This preserves all original branches/returns and works with high register IDs.
+ * Only the concrete manifest IME is wrapped, so superclass return types/casts are not disturbed.
  */
 context(patchContext: BytecodePatchContext)
 private fun wrapLifecycle(
@@ -92,14 +67,10 @@ private fun wrapLifecycle(
     fun matches(method: Method) = method.name == name && method.returnType == returnType &&
         method.parameterTypes.map { it.toString() } == parameters
 
-    val classDef = patchContext.classDefByOrNull(type) ?: run {
-        println("[KeyboardToolbar] Class not found: $type")
-        return
-    }
+    val classDef = patchContext.classDefBy(type)
     val declared = classDef.methods.firstOrNull { matches(it) }
     if (declared != null && (declared.implementation == null || AccessFlags.STATIC.isSet(declared.accessFlags))) {
-        println("[KeyboardToolbar] $type->$name is abstract or static; skipping.")
-        return
+        throw PatchException("SwiftKey: $type->$name cannot be wrapped in this APK version.")
     }
     if (declared == null) {
         var foundInputViewImplementation = false
@@ -110,20 +81,18 @@ private fun wrapLifecycle(
             val inherited = definition.methods.firstOrNull { matches(it) }
             if (inherited != null) {
                 if (inherited.implementation == null || AccessFlags.STATIC.isSet(inherited.accessFlags)) {
-                    return
+                    throw PatchException("SwiftKey: no callable inherited $name implementation in $ancestor.")
                 }
                 foundInputViewImplementation = true
                 if (AccessFlags.FINAL.isSet(inherited.accessFlags)) {
-                    println("[KeyboardToolbar] $name is final in $ancestor; skipping to protect APK.")
-                    return
+                    throw PatchException("SwiftKey: $name is final in $ancestor; this version needs a new toolbar hook.")
                 }
                 break
             }
             ancestor = definition.superclass
         }
         if (name == "onCreateInputView" && !foundInputViewImplementation) {
-            println("[KeyboardToolbar] onCreateInputView not found in ancestry of $type; skipping.")
-            return
+            throw PatchException("SwiftKey: this build creates its view outside onCreateInputView; a new toolbar hook is required.")
         }
     }
     val mutable = patchContext.mutableClassDefBy(classDef)
@@ -134,30 +103,25 @@ private fun wrapLifecycle(
     if (original != null) {
         val bridge = "morphe\$$name"
         if (mutable.methods.any { it.name == bridge }) {
-            println("[KeyboardToolbar] $type already has $bridge, skipping to avoid double wrap.")
-            return
+            throw PatchException("SwiftKey: $type already has $bridge. Patch the original, unmodified APK.")
         }
+        // Methods are hash-based collections: remove BEFORE changing the name/signature.
         mutable.methods.remove(original)
         original.setName(bridge)
         original.setAccessFlags((flags and (AccessFlags.PUBLIC.value or AccessFlags.PROTECTED.value).inv()) or AccessFlags.PRIVATE.value)
         mutable.methods.add(original)
         invocation = "invoke-direct/range {p0 .. p${parameters.size}}, $type->$bridge$signature"
     } else {
-        val superclass = classDef.superclass ?: return
+        val superclass = classDef.superclass ?: throw PatchException("SwiftKey: no superclass for $type.")
         invocation = "invoke-super/range {p0 .. p${parameters.size}}, $superclass->$name$signature"
     }
-    val totalRegisters = 4 + 1 + parameters.size
-    val wrapper = MutableMethod(
-        ImmutableMethod(
-            type, name,
-            parameters.map { com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter(it, emptySet(), null) },
-            returnType, flags, emptySet(), emptySet(),
-            ImmutableMethodImplementation(
-                totalRegisters,
-                emptyList(), emptyList(), emptyList(),
-            ),
-        ),
-    )
+    val wrapper = MutableMethod(ImmutableMethod(
+        type, name,
+        parameters.map { com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter(it, emptySet(), null) },
+        returnType, flags, emptySet(), emptySet(),
+        ImmutableMethodImplementation(1 + parameters.size + (if (returnType == VIEW) 1 else 0),
+            emptyList(), emptyList(), emptyList()),
+    ))
     wrapper.addInstructions(0, listOf(before, invocation, after).filter { it.isNotBlank() }.joinToString("\n"))
     mutable.methods.add(wrapper)
 }

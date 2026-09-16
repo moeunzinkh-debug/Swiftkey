@@ -5,8 +5,6 @@ import android.graphics.Rect;
 import android.graphics.Region;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.InputType;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,7 +18,6 @@ import java.lang.ref.WeakReference;
 /** Compact tools inside the IME input view, above (not replacing) SwiftKey's native keyboard. */
 public final class KeyboardToolbar extends LinearLayout {
     private static WeakReference<KeyboardToolbar> current = new WeakReference<>(null);
-    private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private final InputMethodService service;
     private final LinearLayout tools;
     private TextEditingPanel editing;
