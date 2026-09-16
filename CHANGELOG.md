@@ -1,3 +1,18 @@
+## [1.7.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.6.1...v1.7.0) (2026-09-16)
+
+### ⚠ BREAKING CHANGES
+
+* remove all Lucky Patcher patches
+
+### 🐛 Bug Fixes
+
+* remove invalid ApkProtection stub and use verified patcher APIs ([e475fd0](https://github.com/moeunzinkh-debug/Swiftkey/commit/e475fd0d4c64c3ac41474a37b295e803b2bb56b0))
+
+### ✨ New Features
+
+* remove all Lucky Patcher patches ([cb8d3a1](https://github.com/moeunzinkh-debug/Swiftkey/commit/cb8d3a19a3940292b050c2b5c6781c07958e9f1b))
+* **swiftkey:** keep Disable telemetry, Fix mic, Text editing toolbar + APK crash protection ([2131bf1](https://github.com/moeunzinkh-debug/Swiftkey/commit/2131bf15cddab600e2919fcf17b1faa34c101fa3))
+
 ## [1.6.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.6.0...v1.6.1) (2026-09-16)
 
 ### 🐛 Bug Fixes

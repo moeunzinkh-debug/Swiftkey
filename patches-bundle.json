@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-16T03:57:18",
-  "description": "## [1.6.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.6.0...v1.6.1) (2026-09-16)\n\n### 🐛 Bug Fixes\n\n* **luckypatcher:** support obfuscated package variant ([764497e](https://github.com/moeunzinkh-debug/Swiftkey/commit/764497e5a0569d5e836e01d24db831eb3c289134))",
-  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.6.1/patches-1.6.1.mpp",
+  "created_at": "2026-09-16T17:26:36",
+  "description": "## [1.7.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.6.1...v1.7.0) (2026-09-16)\n\n### ⚠ BREAKING CHANGES\n\n* remove all Lucky Patcher patches\n\n### 🐛 Bug Fixes\n\n* remove invalid ApkProtection stub and use verified patcher APIs ([e475fd0](https://github.com/moeunzinkh-debug/Swiftkey/commit/e475fd0d4c64c3ac41474a37b295e803b2bb56b0))\n\n### ✨ New Features\n\n* remove all Lucky Patcher patches ([cb8d3a1](https://github.com/moeunzinkh-debug/Swiftkey/commit/cb8d3a19a3940292b050c2b5c6781c07958e9f1b))\n* **swiftkey:** keep Disable telemetry, Fix mic, Text editing toolbar + APK crash protection ([2131bf1](https://github.com/moeunzinkh-debug/Swiftkey/commit/2131bf15cddab600e2919fcf17b1faa34c101fa3))",
+  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.7.0/patches-1.7.0.mpp",
   "signature_download_url": "",
-  "version": "1.6.1"
+  "version": "1.7.0"
 }
