@@ -4,6 +4,7 @@ import app.morphe.patcher.patch.bytecodePatch
 import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibility
 import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibilityVariantBilling
 import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibilityVariantRu
+import hooman.morphe.patches.luckypatcher.luckyPatcherCompatibilityVariantSxbu
 
 /**
  * 👑 Unlock Membership — Lucky Patcher + APK Protection
@@ -19,7 +20,12 @@ val unlockMembershipPatch = bytecodePatch(
     name = "Unlock Membership (Lucky Patcher)",
     description = "Unlocks Membership/Subscription (isMember, membership, isSubscribed) by forcing checks to true and tier to 1. Includes APK Protection: backup/rollback, DEX validation, system class guard. Supports all versions via generic scanning. Tag: Lucky Patcher.",
 ) {
-    compatibleWith(luckyPatcherCompatibility, luckyPatcherCompatibilityVariantRu, luckyPatcherCompatibilityVariantBilling)
+    compatibleWith(
+        luckyPatcherCompatibility,
+        luckyPatcherCompatibilityVariantRu,
+        luckyPatcherCompatibilityVariantSxbu,
+        luckyPatcherCompatibilityVariantBilling,
+    )
 
     execute {
         val stats = PatchStats()

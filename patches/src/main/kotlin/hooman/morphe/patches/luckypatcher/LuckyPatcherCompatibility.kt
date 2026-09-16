@@ -64,6 +64,35 @@ internal val luckyPatcherCompatibilityVariantRu = Compatibility(
     ),
 )
 
+/**
+ * Compatibility សម្រាប់ Lucky Patcher build ដែលបានឃើញក្នុង Morphe Manager
+ * ជាមួយ package name ដែលបាន obfuscate ជាក់លាក់នេះ។ Package name របស់ Lucky
+ * Patcher មិនតែងតែជា `com.chelpus.lackypatch` ទេ ដូច្នេះត្រូវចុះបញ្ជីវា
+ * ដាច់ដោយឡែក ដើម្បីឲ្យ Morphe អាចផ្គូផ្គង APK មុនពេលអនុវត្ត patch។
+ */
+internal val luckyPatcherCompatibilityVariantSxbu = Compatibility(
+    name = "Lucky Patcher",
+    packageName = "ru.sxbuIDfx.pFSoyagrF",
+    appIconColor = 0xF7D000,
+    targets = listOf(
+        AppTarget("12.10.8"),
+        AppTarget("11.3.9"),
+        AppTarget("11.2.5"),
+        AppTarget("10.8.9"),
+        AppTarget("10.8.8"),
+        AppTarget("10.8.5"),
+        AppTarget("10.7.9"),
+        AppTarget("10.6.5"),
+        AppTarget("10.5.2"),
+        AppTarget("10.2.1"),
+        AppTarget("9.9.9"),
+        AppTarget("9.5.5"),
+        AppTarget("8.9.8"),
+        AppTarget("8.0.0"),
+        AppTarget("7.5.0"),
+    ),
+)
+
 internal val luckyPatcherCompatibilityVariantBilling = Compatibility(
     name = "Lucky Patcher",
     packageName = "com.android.vending.billing.InAppBillingService.LUCK",
