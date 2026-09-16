@@ -8,6 +8,9 @@ name: Diagnose back-merge (temporary)
 
 on:
   workflow_dispatch:
+  # TEMPORARY trigger so the diagnosis runs autonomously: opening/updating the
+  # session PR runs this. Remove together with the file once diagnosed.
+  pull_request:
 
 jobs:
   diagnose:
