@@ -117,13 +117,17 @@ assert_merged() {
   test "$(git -C "$worker" show origin/dev:source.txt | tail -n 1)" = "main source change"
 }
 
+# Every fixture run below clears GITHUB_ACTIONS=: the script's git behaviour is identical
+# either way, but its ::notice::/::error:: annotations would otherwise spam the CI run
+# (and eat into GitHub's per-step annotation budget). The negative cases in particular
+# are *supposed* to fail — their ::error:: must never paint a green run red.
 # 1) dev keeps its own generated files -> content conflicts must resolve to dev's version.
 worker="$(make_fixture with-metadata with-metadata)"
 printf 'post-release regeneration\n' > "$worker/patches-list.json"
 printf 'npm install residue\n' > "$worker/package-lock.json"
 (
   cd "$worker"
-  BACKMERGE_REMOTE=origin bash "$backmerge_script"
+  GITHUB_ACTIONS= BACKMERGE_REMOTE=origin bash "$backmerge_script"
 )
 assert_merged "$worker"
 for path in "${generated_files[@]}"; do
@@ -135,7 +139,7 @@ done
 worker="$(make_fixture without-metadata without-metadata)"
 (
   cd "$worker"
-  BACKMERGE_REMOTE=origin bash "$backmerge_script"
+  GITHUB_ACTIONS= BACKMERGE_REMOTE=origin bash "$backmerge_script"
 )
 assert_merged "$worker"
 test "$(git -C "$worker" show origin/dev:README.md)" = "dev readme"
@@ -155,7 +159,7 @@ worker="$(make_fixture untracked-residue without-metadata)"
 printf 'untracked generated output\n' > "$worker/patches-list.json"
 (
   cd "$worker"
-  BACKMERGE_REMOTE=origin bash "$backmerge_script"
+  GITHUB_ACTIONS= BACKMERGE_REMOTE=origin bash "$backmerge_script"
 )
 assert_merged "$worker"
 if git -C "$worker" cat-file -e "origin/dev:patches-list.json" 2>/dev/null; then
@@ -182,7 +186,7 @@ grep -q "unexpected source edit" "$worker/source.txt"
 worker="$(make_fixture target-wins diverged-source)"
 (
   cd "$worker"
-  BACKMERGE_REMOTE=origin BACKMERGE_TARGET_WINS=source.txt bash "$backmerge_script"
+  GITHUB_ACTIONS= BACKMERGE_REMOTE=origin BACKMERGE_TARGET_WINS=source.txt bash "$backmerge_script"
 )
 git -C "$worker" fetch --quiet origin main dev
 git -C "$worker" merge-base --is-ancestor origin/main origin/dev

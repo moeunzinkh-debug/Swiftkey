@@ -199,6 +199,8 @@ if (( ${#unresolved[@]} > 0 )); then
 fi
 
 run_git commit -m "$commit_message"
-annotate_notice "Committed $(git rev-parse --short HEAD) on ${target_branch}; pushing to ${remote}/${target_branch}."
+ahead="$(git rev-list --count "$remote/$target_branch..HEAD")"
+behind="$(git rev-list --count "HEAD..$remote/$target_branch")"
+annotate_notice "Committed $(git rev-parse --short HEAD) on ${target_branch} (${ahead} ahead, ${behind} behind ${remote}/${target_branch}); pushing."
 run_git push "$remote" "$target_branch"
 annotate_notice "Pushed ${target_branch} to $(git rev-parse --short "$remote/$target_branch")."
