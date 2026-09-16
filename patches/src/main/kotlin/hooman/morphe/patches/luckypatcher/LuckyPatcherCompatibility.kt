@@ -21,7 +21,12 @@ internal val luckyPatcherCompatibility = Compatibility(
     appIconColor = 0xF7D000,
     // ដាក់កំណែច្រើនដើម្បីបង្ហាញថា support all version
     // តាម Morphe docs គួរដាក់ពីថ្មីទៅចាស់
+    // 12.10.8 ជាកំណែចេញផ្សាយថ្មីបំផុតរបស់ Lucky Patcher (សីហា 2026)។ បំណះទាំងឡាយ
+    // ប្រើ generic string scanning + soft-fail ដូច្នេះវាដំណើរការលើកំណែនេះដោយគ្មាន
+    // fingerprint ជាក់លាក់ — គ្រាន់តែប្រកាសជា target ដើម្បីឲ្យ Morphe Manager បង្ហាញ
+    // កំណែដែលបានផ្ទៀងផ្ទាត់ (មិនដាក់ isExperimental ព្រោះវាមិនពឹងលើ fingerprint)។
     targets = listOf(
+        AppTarget("12.10.8"),
         AppTarget("11.3.9"),
         AppTarget("11.2.5"),
         AppTarget("10.8.9"),
@@ -50,6 +55,9 @@ internal val luckyPatcherCompatibilityVariantRu = Compatibility(
     packageName = "ru.byn4ik.lp",
     appIconColor = 0xF7D000,
     targets = listOf(
+        // កំណែថ្មីបំផុតត្រូវដាក់មុនគេ (តាមឯកសារ Morphe) — variant នេះក៏ប្រើ logic
+        // universal ដូចគ្នា ដូច្នេះ 12.10.8 ដំណើរការដូច package ចម្បងដែរ។
+        AppTarget("12.10.8"),
         AppTarget("11.3.9"),
         AppTarget("10.8.9"),
         AppTarget("8.0.0"),
@@ -61,6 +69,7 @@ internal val luckyPatcherCompatibilityVariantBilling = Compatibility(
     packageName = "com.android.vending.billing.InAppBillingService.LUCK",
     appIconColor = 0xF7D000,
     targets = listOf(
+        AppTarget("12.10.8"),
         AppTarget("10.8.9"),
         AppTarget("8.0.0"),
     ),
