@@ -46,7 +46,15 @@ annotate_error() {
 
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git fetch "$remote" "$source_branch" "$target_branch"
+# A CI checkout can be configured with a narrow fetch refspec (single-branch clone). Then
+# `git fetch <remote> main dev` only fills FETCH_HEAD and never creates
+# refs/remotes/<remote>/<target_branch>, so the switch below dies with
+# "fatal: invalid reference: origin/dev". Force the wildcard refspec and fetch both
+# branches with explicit destination refs so the remote-tracking refs always exist.
+git config "remote.${remote}.fetch" "+refs/heads/*:refs/remotes/${remote}/*"
+git fetch --prune "$remote" \
+  "+refs/heads/${source_branch}:refs/remotes/${remote}/${source_branch}" \
+  "+refs/heads/${target_branch}:refs/remotes/${remote}/${target_branch}"
 
 # Print the subset of "$@" that exists in <tree> (default HEAD). `git restore`/`git checkout`
 # fail hard on a pathspec that the tree does not know, so filter first.
