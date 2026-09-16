@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-15T14:45:05",
-  "description": "## [1.5.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.4...v1.5.0) (2026-09-15)\n\n### 🐛 Bug Fixes\n\n* **luckypatcher:** use BytecodePatchContext and verified patcher APIs to fix compile errors ([4fae08d](https://github.com/moeunzinkh-debug/Swiftkey/commit/4fae08d408b97eda489d04e51edbaf2c05ae2e1e))\n\n### ✨ New Features\n\n* **luckypatcher:** add Lucky Patcher tag with unlock pro/premium/membership/vip + APK protection ([a54bc86](https://github.com/moeunzinkh-debug/Swiftkey/commit/a54bc86158a64b77f376f05adb19aed708c6b169))\n* **luckypatcher:** add new tag Lucky Patcher with unlock pro/premium/membership/vip ([6363a69](https://github.com/moeunzinkh-debug/Swiftkey/commit/6363a6963c9517b76bc402bf522ca718fdf13d2f))\n* **protection:** add APK protection system to prevent corruption during patch ([aa55eb4](https://github.com/moeunzinkh-debug/Swiftkey/commit/aa55eb4c75627152f362113dae9fea48709666b4))",
-  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.5.0/patches-1.5.0.mpp",
+  "created_at": "2026-09-16T02:35:43",
+  "description": "## [1.6.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.5.0...v1.6.0) (2026-09-16)\n\n### 🐛 Bug Fixes\n\n* **ci:** guard README patch markers and merge duplicate app sections ([3cc7653](https://github.com/moeunzinkh-debug/Swiftkey/commit/3cc765341eed6548f9bc4dd5855e5d7cb4b05abe))\n* **ci:** keep dev's rewritten MicSupport.java when back-merging main into dev ([0e2ad72](https://github.com/moeunzinkh-debug/Swiftkey/commit/0e2ad7267d0127a8bfb9939975ea8d3676692798))\n* **ci:** keep the expected-failure back-merge tests from painting the run red ([d9eaccb](https://github.com/moeunzinkh-debug/Swiftkey/commit/d9eaccb54e70078852a689d33e1a1059949501fc)), closes [#19](https://github.com/moeunzinkh-debug/Swiftkey/issues/19)\n\n### ✨ New Features\n\n* **luckypatcher:** declare Lucky Patcher 12.10.8 as a supported target ([d3759a1](https://github.com/moeunzinkh-debug/Swiftkey/commit/d3759a190c416b223201b52f0cb23e4dd045768b))",
+  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.6.0/patches-1.6.0.mpp",
   "signature_download_url": "",
-  "version": "1.5.0"
+  "version": "1.6.0"
 }

@@ -1,3 +1,15 @@
+## [1.6.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.5.0...v1.6.0) (2026-09-16)
+
+### 🐛 Bug Fixes
+
+* **ci:** guard README patch markers and merge duplicate app sections ([3cc7653](https://github.com/moeunzinkh-debug/Swiftkey/commit/3cc765341eed6548f9bc4dd5855e5d7cb4b05abe))
+* **ci:** keep dev's rewritten MicSupport.java when back-merging main into dev ([0e2ad72](https://github.com/moeunzinkh-debug/Swiftkey/commit/0e2ad7267d0127a8bfb9939975ea8d3676692798))
+* **ci:** keep the expected-failure back-merge tests from painting the run red ([d9eaccb](https://github.com/moeunzinkh-debug/Swiftkey/commit/d9eaccb54e70078852a689d33e1a1059949501fc)), closes [#19](https://github.com/moeunzinkh-debug/Swiftkey/issues/19)
+
+### ✨ New Features
+
+* **luckypatcher:** declare Lucky Patcher 12.10.8 as a supported target ([d3759a1](https://github.com/moeunzinkh-debug/Swiftkey/commit/d3759a190c416b223201b52f0cb23e4dd045768b))
+
 ## [1.5.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.4.4...v1.5.0) (2026-09-15)
 
 ### 🐛 Bug Fixes
