@@ -44,9 +44,38 @@ annotate_error() {
   fi
 }
 
-git config user.name "github-actions[bot]"
-git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git fetch "$remote" "$source_branch" "$target_branch"
+# Progress markers: if the script ever dies on a bare command again (no annotation of its
+# own), the last notice visible on the run page pinpoints the stage it reached. Queryable
+# via the check-runs annotations API even when the raw log archive is unreachable.
+annotate_notice() {
+  local message="$1"
+  echo "$message"
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    echo "::notice title=back-merge ${source_branch} to ${target_branch}::${message}"
+  fi
+}
+
+# Run a git *action* command (one whose output is human-read, never machine-parsed):
+# echo it, replay its output to the log, and — this is the important part — turn ANY
+# failure into an annotation carrying the command, the exit code, and the output tail.
+# A back-merge must NEVER again fail as a bare "exit code 1" with no cause attached.
+# Returns git's exit code unchanged so `set -e` and `||`/`if` callers behave as before.
+run_git() {
+  echo "+ git $*"
+  local output status
+  output="$(git "$@" 2>&1)" && status=0 || status=$?
+  printf '%s\n' "$output"
+  if (( status != 0 )); then
+    local detail
+    detail="$(tail -c 1200 <<<"$output" | tr '\n' ' ' | sed 's/%/%25/g')"
+    annotate_error "git $* failed with exit ${status}: ${detail}"
+  fi
+  return "$status"
+}
+
+run_git config user.name "github-actions[bot]"
+run_git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+run_git fetch "$remote" "$source_branch" "$target_branch"
 
 # Print the subset of "$@" that exists in <tree> (default HEAD). `git restore`/`git checkout`
 # fail hard on a pathspec that the tree does not know, so filter first.
@@ -66,7 +95,7 @@ paths_in_tree() {
 # package-lock.json is not in generated_files, so real lockfile changes still merge into dev below.
 mapfile -t tracked_residue < <(paths_in_tree HEAD "${pre_switch_files[@]}")
 if (( ${#tracked_residue[@]} > 0 )); then
-  git restore --source=HEAD --staged --worktree -- "${tracked_residue[@]}"
+  run_git restore --source=HEAD --staged --worktree -- "${tracked_residue[@]}"
 fi
 # Untracked leftovers of the same generated files (e.g. `patches-list.json` written by
 # `./gradlew generatePatchesList` on a branch that does not track it) would otherwise make
@@ -86,8 +115,13 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 1
 fi
 
-git switch --force-create "$target_branch" "$remote/$target_branch"
+run_git switch --force-create "$target_branch" "$remote/$target_branch"
+annotate_notice "On ${target_branch} at $(git rev-parse --short HEAD), merging ${source_branch} at $(git rev-parse --short "$remote/$source_branch")."
 
+# `git merge` is deliberately NOT run through run_git: exit 1 with conflicts left in the
+# tree is the expected outcome here, not an error, and the MERGE_HEAD check below already
+# annotates the genuinely broken case (merge refusing to start at all).
+echo "+ git merge --no-commit --no-ff $remote/$source_branch"
 merge_status=0
 git merge --no-commit --no-ff "$remote/$source_branch" || merge_status=$?
 
@@ -102,6 +136,7 @@ if ! git rev-parse --verify --quiet MERGE_HEAD >/dev/null; then
 fi
 
 mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+annotate_notice "Merge reports ${#conflicts[@]} conflicted path(s): ${conflicts[*]:-none}."
 declare -A generated_file_set=()
 for path in "${generated_files[@]}"; do
   generated_file_set["$path"]=1
@@ -121,7 +156,7 @@ done
 if (( ${#unexpected_conflicts[@]} > 0 )); then
   printf '  %s\n' "${unexpected_conflicts[@]}" >&2
   annotate_error "Back-merge aborted: ${source_branch} and ${target_branch} both changed ${unexpected_conflicts[*]}. Resolve by hand, or add the path to the target-wins allow-list at the top of this script when ${target_branch} deliberately rewrote it."
-  git merge --abort
+  run_git merge --abort
   exit 1
 fi
 
@@ -147,20 +182,23 @@ for path in "${conflicts[@]}"; do
   fi
   if git cat-file -e "HEAD:${path}" 2>/dev/null; then
     echo "Keeping ${target_branch} version of $path (${reason})"
-    git checkout --quiet HEAD -- "$path"
+    run_git checkout --quiet HEAD -- "$path"
   else
     echo "Keeping ${target_branch} deletion of $path (${reason})"
-    git rm -f --quiet -- "$path"
+    run_git rm -f --quiet -- "$path"
   fi
 done
 
 mapfile -t unresolved < <(git diff --name-only --diff-filter=U)
+annotate_notice "Resolution pass done: ${#conflicts[@]} handled, ${#unresolved[@]} still unresolved."
 if (( ${#unresolved[@]} > 0 )); then
   printf '  %s\n' "${unresolved[@]}" >&2
   annotate_error "Back-merge aborted: conflicts still unresolved after keeping the ${target_branch} side: ${unresolved[*]}."
-  git merge --abort
+  run_git merge --abort
   exit 1
 fi
 
-git commit -m "$commit_message"
-git push "$remote" "$target_branch"
+run_git commit -m "$commit_message"
+annotate_notice "Committed $(git rev-parse --short HEAD) on ${target_branch}; pushing to ${remote}/${target_branch}."
+run_git push "$remote" "$target_branch"
+annotate_notice "Pushed ${target_branch} to $(git rev-parse --short "$remote/$target_branch")."
