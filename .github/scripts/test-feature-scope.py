@@ -9,18 +9,19 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCES = ROOT / "patches/src/main/kotlin/hooman/morphe/patches/swiftkey"
+PATCHES = ROOT / "patches/src/main/kotlin/hooman/morphe/patches"
+SOURCES = PATCHES / "swiftkey"
 EXTENSIONS = ROOT / "extensions/swiftkey/src/main/java/app/morphe/extension/swiftkey"
 EXPECTED = {"Text editing toolbar", "Offline microphone"}
 
 
-def source_descriptions():
+def source_descriptions(directory=SOURCES):
     patches = {}
     declaration = re.compile(
         r'\b(?:bytecodePatch|resourcePatch)\(\s*name\s*=\s*("(?:\\.|[^"\\])*")\s*,'
         r'\s*description\s*=\s*(.*?)\n\)', re.S
     )
-    for path in SOURCES.rglob("*.kt"):
+    for path in directory.rglob("*.kt"):
         for match in declaration.finditer(path.read_text()):
             name = json.loads(match[1])
             description = "".join(json.loads(s) for s in re.findall(r'"(?:\\.|[^"\\])*"', match[2]))
@@ -38,10 +39,31 @@ class FeatureScopeTests(unittest.TestCase):
         self.assertEqual(named_count, 2)
 
     def test_catalogue_matches_source(self):
+        # patches-list.json is (re)written by `./gradlew generatePatchesList`, which loads EVERY
+        # named patch of the built bundle — the SwiftKey package and the SimSimi package alike
+        # (see patches/src/main/kotlin/util/PatchListGenerator.kt). The checked-in copy on a
+        # branch that has not released yet can therefore legitimately carry fewer entries than
+        # the module declares, so the invariants checked here are the ones that detect drift:
+        #   * no catalogue entry without a matching source declaration (phantom/stale rename),
+        #   * every SwiftKey feature published by this repo is actually present,
+        #   * each entry's description matches the string in its source file.
+        # Comparing set-equality against the SwiftKey sources alone (the old assertion) broke the
+        # v1.7.0 back-merge build (run 35167396738) as soon as the SimSimi patches reached dev:
+        # the regenerated catalogue held 8 patches while the assertion expected exactly 2.
         catalogue = json.loads((ROOT / "patches-list.json").read_text())
-        self.assertEqual({p["name"]: p["description"] for p in catalogue["patches"]}, source_descriptions())
-        self.assertEqual(len(catalogue["patches"]), 2)
+        declared = source_descriptions(PATCHES)
+        entries = {p["name"]: p["description"] for p in catalogue["patches"]}
+        self.assertEqual(set(entries) - set(declared), set(),
+                         "catalogue lists a patch no source declares")
+        self.assertEqual(EXPECTED - set(entries), set(),
+                         "catalogue is missing a SwiftKey feature")
+        for name, description in entries.items():
+            self.assertEqual(description, declared[name], f"description drift: {name}")
         for patch in catalogue["patches"]:
+            # SimSimi entries carry their own compatibility/options; the shape asserted below
+            # is the SwiftKey feature contract.
+            if patch["name"] not in EXPECTED:
+                continue
             self.assertEqual(patch["dependencies"], ["BytecodePatch", "ResourcePatch"])
             self.assertEqual(patch["options"], [])
             self.assertEqual(patch["compatiblePackages"][0]["packageName"], "com.touchtype.swiftkey")
