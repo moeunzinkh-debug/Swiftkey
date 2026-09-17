@@ -78,6 +78,20 @@ internal val patchesSettingsManifestPatch = resourcePatch {
             }
 
             root.application().metadata(FLAG_SETTINGS_UI, "true")
+
+            // The Patches settings screen (applied patches list + offline mic settings).
+            val activityClass = "app.morphe.extension.swiftkey.PatchesActivity"
+            val application = root.application()
+            val hasActivity = application.children("activity")
+                .any { it.getAttribute("android:name") == activityClass }
+            if (!hasActivity) {
+                val element = manifest.createElement("activity")
+                element.setAttribute("android:name", activityClass)
+                element.setAttribute("android:exported", "false")
+                element.setAttribute("android:label", "Patches")
+                element.setAttribute("android:theme", "@android:style/Theme.Material.NoActionBar")
+                application.appendChild(element)
+            }
         }
     }
 }
@@ -85,8 +99,10 @@ internal val patchesSettingsManifestPatch = resourcePatch {
 @Suppress("unused")
 val patchesSettingsPatch = bytecodePatch(
     name = "Patches",
-    description = "Adds a Patches entry to the SwiftKey settings screen. Tapping it shows a dialog " +
-        "listing the patches that were applied to this build (only the selected patches are listed).",
+    description = "Adds a Patches entry to the SwiftKey settings screen. Opens the Patches settings " +
+        "screen: the patches applied to this build (only the selected ones), plus the offline " +
+        "microphone settings (default/installed engines, offline mode toggle, engine switch and " +
+        "the K\u00F5nele offline engine installer).",
 ) {
     compatibleWith(swiftKeyCompatibility)
     dependsOn(patchesSettingsManifestPatch)

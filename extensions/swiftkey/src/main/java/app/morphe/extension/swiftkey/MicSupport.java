@@ -116,6 +116,17 @@ public final class MicSupport {
                 }
             }
 
+            // Offline mic mode (toggled in the Patches settings screen): when enabled,
+            // prefer a non-Google recognition service even if Google is the system default.
+            ComponentName offline = offlineModeEnabled(app) ? firstNonGoogleRecognizer(app) : null;
+            if (offline != null) {
+                try {
+                    return SpeechRecognizer.createSpeechRecognizer(app, offline);
+                } catch (Throwable ignored) {
+                    // ធ្លាក់​មក​លំនាំដើម។
+                }
+            }
+
             // ចំណាំ៖ បំណះ​នេះ​មិន​ទាញយក model ឬ​ឯកសារ​ណា​មួយ​ពី​អ៊ីនធឺណិត​ទេ។ វា​គ្រាន់តែ​ដក
             // ច្រក​របាំង Google ចេញ ដើម្បី​ឲ្យ​ SwiftKey ប្រើ RecognitionService លំនាំដើម​
             // របស់​ប្រព័ន្ធ (Kõnele/Vosk ជាដើម)។ ការ​ទាញយក model ធ្វើ​ដោយ​កម្មវិធី​ម៉ាស៊ីន​នោះ
@@ -249,6 +260,43 @@ public final class MicSupport {
     private static boolean isGoogleRecognizer(ComponentName component) {
         String pkg = component.getPackageName();
         return GOOGLE_SEARCH_APP.equals(pkg) || GOOGLE_TTS_APP.equals(pkg);
+    }
+
+    /**
+     * @return ពិត បើប្រើ "offline mic mode" — បើក/បិទនៅក្នុង Patches settings screen
+     *         (PatchesActivity រក្សាទុកក្នុង SharedPreferences របស់កម្មវិធីដូចគ្នា)។
+     */
+    private static boolean offlineModeEnabled(Context context) {
+        try {
+            return context.getSharedPreferences("app_morphe_swiftkey", Context.MODE_PRIVATE)
+                .getBoolean("OFFLINE_MIC", false);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /** @return ម៉ាស៊ីន RecognitionService មិនមែន Google ដំបូង ឬ null បើមិនមាន។ */
+    private static ComponentName firstNonGoogleRecognizer(Context context) {
+        try {
+            Intent intent = new Intent(RecognitionService.SERVICE_INTERFACE);
+            List<ResolveInfo> services = context.getPackageManager().queryIntentServices(intent, 0);
+            if (services != null) {
+                for (ResolveInfo info : services) {
+                    if (info.serviceInfo == null || info.serviceInfo.packageName == null
+                            || info.serviceInfo.name == null) {
+                        continue;
+                    }
+                    ComponentName candidate =
+                        new ComponentName(info.serviceInfo.packageName, info.serviceInfo.name);
+                    if (!isGoogleRecognizer(candidate)) {
+                        return candidate;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // មិនអាច query បាន (ឧ. <queries> ខ្វះ) → ប្រើលំនាំដើមប្រព័ន្ធដាច់។
+        }
+        return null;
     }
 
     /** @return ពិត​បើ​សេវា​ដែល​ចង្អុល​ដោយ ComponentName មាន​ពិត​នៅ​ក្នុង​ប្រព័ន្ធ។ */

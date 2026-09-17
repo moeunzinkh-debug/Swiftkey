@@ -112,6 +112,36 @@ final class ToolbarViews {
         button.setSelected(selected);
     }
 
+    /** Monochrome microphone glyph matching the native toolbar icon style. */
+    static Drawable micIcon(Context context, int color) {
+        try {
+            VectorDrawable.Builder builder = new VectorDrawable.Builder();
+            builder.setWidth(24);
+            builder.setHeight(24);
+            builder.setviewportWidth(24);
+            builder.setviewportHeight(24);
+            // Mic body (capsule), stem and base — filled.
+            Path body = new Path();
+            body.addRoundRect(new RectF(9f, 3f, 15f, 13f), 3f, 3f, Path.Direction.CW);
+            body.addRoundRect(new RectF(11f, 17f, 13f, 20f), 1f, 1f, Path.Direction.CW);
+            body.addRoundRect(new RectF(8.5f, 19.5f, 15.5f, 21f), 1f, 1f, Path.Direction.CW);
+            Paint fill = new Paint();
+            fill.setColor(color);
+            builder.addPath(body, fill);
+            // Cradle arc — stroked.
+            Path arc = new Path();
+            arc.addArc(new RectF(5.5f, 4.5f, 18.5f, 17.5f), 0f, 180f);
+            Paint stroke = new Paint();
+            stroke.setColor(color);
+            stroke.setStyle(Paint.Style.STROKE);
+            stroke.setStrokeWidth(2f);
+            builder.addPath(arc, stroke);
+            return builder.build();
+        } catch (Throwable t) {
+            return new GradientDrawable();
+        }
+    }
+
     /** Monochrome "text lines" glyph matching the native toolbar icon style. */
     static Drawable textIcon(Context context, int color) {
         try {

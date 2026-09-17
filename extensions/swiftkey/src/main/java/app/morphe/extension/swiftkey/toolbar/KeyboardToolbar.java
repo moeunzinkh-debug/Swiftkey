@@ -1,5 +1,8 @@
 package app.morphe.extension.swiftkey.toolbar;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.graphics.Region;
@@ -38,18 +41,22 @@ public final class KeyboardToolbar extends LinearLayout {
     private final View keyboard;
     private final LinearLayout tools;
     private final boolean textEditing;
+    private final boolean micUi;
     private TextEditingPanel editing;
     private Button editButton;
+    private Button micButton;
     private ImageButton nativeEditButton;
+    private ImageButton nativeMicButton;
     private boolean nativeInstalled;
     private boolean fallbackInstalled;
     private int nativeAttempts;
 
-    private KeyboardToolbar(InputMethodService service, View keyboard, boolean textEditing) {
+    private KeyboardToolbar(InputMethodService service, View keyboard, boolean textEditing, boolean micUi) {
         super(service);
         this.service = service;
         this.keyboard = keyboard;
         this.textEditing = textEditing;
+        this.micUi = micUi;
         setOrientation(VERTICAL);
         try {
             ViewGroup.LayoutParams original = keyboard.getLayoutParams();
@@ -101,8 +108,9 @@ public final class KeyboardToolbar extends LinearLayout {
             Bundle settings = service.getPackageManager().getApplicationInfo(service.getPackageName(),
                 PackageManager.GET_META_DATA).metaData;
             boolean editing = settings != null && settings.getBoolean("app.morphe.swiftkey.TEXT_EDITING", false);
-            if (!editing) return keyboard;
-            KeyboardToolbar wrapper = new KeyboardToolbar(service, keyboard, editing);
+            boolean mic = settings != null && settings.getBoolean("app.morphe.swiftkey.PATCH_microphone_fix", false);
+            if (!editing && !mic) return keyboard;
+            KeyboardToolbar wrapper = new KeyboardToolbar(service, keyboard, editing, mic);
             current = new WeakReference<>(wrapper);
             return wrapper;
         } catch (Throwable t) {
@@ -122,11 +130,13 @@ public final class KeyboardToolbar extends LinearLayout {
             KeyboardToolbar toolbar = current.get();
             if (toolbar != null && toolbar.service == service) {
                 toolbar.reset();
-                if (toolbar.nativeInstalled && toolbar.nativeEditButton != null
-                    && !toolbar.nativeEditButton.isAttachedToWindow()) {
+                if (toolbar.nativeInstalled && (
+                        (toolbar.nativeEditButton != null && !toolbar.nativeEditButton.isAttachedToWindow())
+                            || (toolbar.nativeMicButton != null && !toolbar.nativeMicButton.isAttachedToWindow()))) {
                     // SwiftKey replaced the toolbar row with a new view tree; re-search it.
                     toolbar.nativeInstalled = false;
                     toolbar.nativeEditButton = null;
+                    toolbar.nativeMicButton = null;
                     toolbar.nativeAttempts = 0;
                 }
                 // The input view may have been swapped; resume the native-row search if needed.
@@ -192,7 +202,7 @@ public final class KeyboardToolbar extends LinearLayout {
     // ------------------------------------------------------------------
 
     private void kickoffNativeSearch() {
-        if (!textEditing || editing == null || nativeInstalled || fallbackInstalled) return;
+        if (nativeInstalled || fallbackInstalled) return;
         if (!isAttachedToWindow()) return;
         scheduleNativeSearch(0);
     }
@@ -203,7 +213,7 @@ public final class KeyboardToolbar extends LinearLayout {
     }
 
     private void runNativeSearch() {
-        if (nativeInstalled || fallbackInstalled || editing == null || !isAttachedToWindow()) return;
+        if (nativeInstalled || fallbackInstalled || !isAttachedToWindow()) return;
         if (keyboard.isLaidOut() && keyboard.getHeight() > 0) {
             LinearLayout row = findNativeToolbarRow(keyboard);
             if (row != null) {
@@ -225,23 +235,38 @@ public final class KeyboardToolbar extends LinearLayout {
     }
 
     private void installNativeButton(LinearLayout row) {
+        if (textEditing) {
+            nativeEditButton = addNativeIconButton(row,
+                ToolbarViews.textIcon(service, ToolbarViews.foreground(service)),
+                "Show or hide text editing tools", v -> toggleEditing());
+        }
+        if (micUi) {
+            nativeMicButton = addNativeIconButton(row,
+                ToolbarViews.micIcon(service, ToolbarViews.foreground(service)),
+                "Offline microphone settings", v -> openPatchesSettings());
+            refreshMicState();
+        }
+    }
+
+    private ImageButton addNativeIconButton(LinearLayout row, android.graphics.drawable.Drawable drawable,
+                                            String description, View.OnClickListener listener) {
         ImageButton button = new ImageButton(service);
         button.setBackgroundResource(0);
-        button.setImageDrawable(ToolbarViews.textIcon(service, ToolbarViews.foreground(service)));
-        button.setContentDescription("Show or hide text editing tools");
+        button.setImageDrawable(drawable);
+        button.setContentDescription(description);
         int padding = ToolbarViews.dp(service, 12);
         button.setPadding(padding, padding, padding, padding);
         button.setFocusable(false);
         button.setFocusableInTouchMode(false);
-        button.setOnClickListener(v -> toggleEditing());
+        button.setOnClickListener(listener);
         row.addView(button, row.getChildCount());
-        nativeEditButton = button;
         ToolbarViews.selectedNative(button, false);
+        return button;
     }
 
     /** Fallback when the native toolbar row could not be identified. */
     private void installFallbackHeader() {
-        if (fallbackInstalled || editing == null) return;
+        if (fallbackInstalled || (!textEditing && !micUi)) return;
         fallbackInstalled = true;
         try {
             LinearLayout header = ToolbarViews.row(tools);
@@ -249,8 +274,15 @@ public final class KeyboardToolbar extends LinearLayout {
             tools.removeView(scroll);
             // The panel (GONE) already occupies index 0; the header must stay above it.
             tools.addView(scroll, 0);
-            editButton = ToolbarViews.button(header, "Text editing", "Show or hide text editing tools",
-                v -> toggleEditing());
+            if (textEditing) {
+                editButton = ToolbarViews.button(header, "Text editing", "Show or hide text editing tools",
+                    v -> toggleEditing());
+            }
+            if (micUi) {
+                micButton = ToolbarViews.button(header, "Offline mic", "Offline microphone settings",
+                    v -> openPatchesSettings());
+            }
+            refreshMicState();
         } catch (Throwable ignored) {
         }
     }
@@ -334,10 +366,49 @@ public final class KeyboardToolbar extends LinearLayout {
 
     private void toggleEditing() {
         try {
+            if (editing == null) return;
             boolean open = editing.getVisibility() != VISIBLE;
             reset();
             editing.setVisibility(open ? VISIBLE : GONE);
             setEditingSelected(open);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** Opens the Patches settings screen (offline mic section); falls back to system settings. */
+    private void openPatchesSettings() {
+        try {
+            Intent intent = new Intent();
+            intent.setComponent(new ComponentName(service.getPackageName(),
+                "app.morphe.extension.swiftkey.PatchesActivity"));
+            intent.putExtra("app.morphe.swiftkey.SECTION", "mic");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            service.startActivity(intent);
+        } catch (Throwable ignored) {
+            try {
+                Intent intent = new Intent("android.settings.SPEECH_SERVICE_SETTINGS");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                service.startActivity(intent);
+            } catch (Throwable ignored2) {
+            }
+        }
+    }
+
+    private boolean offlineMicEnabled() {
+        try {
+            Context app = service.getApplicationContext();
+            return app.getSharedPreferences("app_morphe_swiftkey", Context.MODE_PRIVATE)
+                .getBoolean("OFFLINE_MIC", false);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private void refreshMicState() {
+        try {
+            boolean on = offlineMicEnabled();
+            if (nativeMicButton != null) ToolbarViews.selectedNative(nativeMicButton, on);
+            if (micButton != null) ToolbarViews.selected(micButton, on);
         } catch (Throwable ignored) {
         }
     }
@@ -354,6 +425,7 @@ public final class KeyboardToolbar extends LinearLayout {
                 editing.setVisibility(GONE);
             }
             setEditingSelected(false);
+            refreshMicState();
         } catch (Throwable ignored) {
         }
     }

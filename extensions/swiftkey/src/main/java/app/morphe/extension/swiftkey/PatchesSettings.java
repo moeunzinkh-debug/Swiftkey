@@ -2,7 +2,9 @@ package app.morphe.extension.swiftkey;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -99,6 +101,21 @@ public final class PatchesSettings {
         }
     }
 
+    /** Patches applied to this build, in stable order. Used by both the row and the activity. */
+    public static List<String[]> appliedPatches(Activity activity) {
+        return collectApplied(readFlags(activity));
+    }
+
+    /** The target app version name (e.g. "9.13.13.5"), or "" when unknown. */
+    public static String appVersion(Activity activity) {
+        try {
+            PackageInfo info = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0);
+            return info.versionName == null ? "" : info.versionName;
+        } catch (Throwable ignored) {
+            return "";
+        }
+    }
+
     private static List<String[]> collectApplied(Bundle flags) {
         List<String[]> applied = new ArrayList<>();
         if (flag(flags, FLAG_DISABLE_TELEMETRY)) {
@@ -186,11 +203,24 @@ public final class PatchesSettings {
         chevron.setSingleLine(true);
         inner.addView(chevron, new LinearLayout.LayoutParams(dp(activity, 24), dp(activity, 24)));
 
-        inner.setOnClickListener(v -> showDialog(activity, applied));
+        inner.setOnClickListener(v -> openPatchesScreen(activity, applied));
 
         row.addView(inner, new LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return row;
+    }
+
+    /** Opens the Patches settings screen; falls back to the dialog when the activity is absent. */
+    private static void openPatchesScreen(Activity activity, List<String[]> applied) {
+        try {
+            Intent intent = new Intent();
+            intent.setComponent(new ComponentName(activity.getPackageName(),
+                "app.morphe.extension.swiftkey.PatchesActivity"));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            activity.startActivity(intent);
+        } catch (Throwable ignored) {
+            showDialog(activity, applied);
+        }
     }
 
     private static void showDialog(Activity activity, List<String[]> applied) {
