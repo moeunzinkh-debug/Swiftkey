@@ -4,7 +4,11 @@ on:
   workflow_dispatch:
   pull_request:
     branches:
+      # `main` ជា​សាខា​ចេញ​ផ្សាយ (release.yml ដំណើរការ​នៅ​ទីនោះ)។ បើ​មិន​ដាក់ `main` ទេ PR
+      # ទៅ​ main មិន​ត្រូវ​បាន build សោះ​ទេ ហើយ​កំហុស compile ចេញ​រហូត​ដល់​ពេល merge
+      # (ឃើញ​បាន​ពី PR #12/#13) —
       - dev
+      - main
 
 jobs:
   release:
@@ -21,6 +25,21 @@ jobs:
       # ការធ្វើតេស្ដនេះហើយដែលប្រាប់ថា conflict ប្រភេទ modify/delete នៅ dev ត្រូវបានដោះស្រាយ។
       - name: Test back-merge script
         run: bash .github/scripts/test-backmerge-main-to-dev.sh
+
+      # ត្រួតពិនិត្យ marker README នៅ PR ផង ដើម្បីឲ្យឃើញមុនពេល merge ទៅ main —
+      # បើបាត់ generate_patches_readme.py នឹងធ្វើឲ្យ release បរាជ័យ (មើល release.yml)។
+      - name: Verify README patch markers
+        run: |
+          set -euo pipefail
+          if ! grep -qE '<!-- PATCHES_START( EXPANDED)? -->' README.md; then
+            echo "::error::README.md បាត់ <!-- PATCHES_START -->"
+            exit 1
+          fi
+          if ! grep -qF '<!-- PATCHES_END -->' README.md; then
+            echo "::error::README.md បាត់ <!-- PATCHES_END -->"
+            exit 1
+          fi
+          echo "✅ README markers intact"
 
       - name: Setup Java
         uses: actions/setup-java@v5

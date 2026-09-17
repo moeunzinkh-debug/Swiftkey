@@ -19,7 +19,7 @@ public final class TextEditingActions {
     public void reset() { selecting = false; }
 
     public boolean perform(Action action) {
-        if (!editor.available()) { reset(); return false; }
+        if (editor == null || !editor.available()) { reset(); return false; }
         if (action == Action.SELECT) { selecting = !selecting; return true; }
         switch (action) {
             case LEFT: case UP: case DOWN: case RIGHT: case HOME: case END:

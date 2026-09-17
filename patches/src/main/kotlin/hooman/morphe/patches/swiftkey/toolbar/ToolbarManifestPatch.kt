@@ -28,8 +28,7 @@ internal val toolbarManifestPatch = resourcePatch {
             val sdk = root.children("uses-sdk").firstOrNull()
                 ?: manifest.createElement("uses-sdk").also { root.appendChild(it) }
             val declaredMin = sdk.getAttribute("android:minSdkVersion")
-            val minSdk = if (declaredMin.isBlank()) 1 else declaredMin.toIntOrNull()
-                ?: throw PatchException("SwiftKey: cannot determine the APK's minimum Android SDK.")
+            val minSdk = if (declaredMin.isBlank()) 1 else declaredMin.toIntOrNull() ?: 26
             if (minSdk < 26) sdk.setAttribute("android:minSdkVersion", "26")
             val originalPackage = packageMetadata.packageName
             imeServiceDescriptors = root.application().children("service")

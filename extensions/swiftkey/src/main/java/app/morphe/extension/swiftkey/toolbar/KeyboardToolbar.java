@@ -34,49 +34,53 @@ public final class KeyboardToolbar extends LinearLayout {
         super(service);
         this.service = service;
         setOrientation(VERTICAL);
-        ViewGroup.LayoutParams original = keyboard.getLayoutParams();
-        if (original != null) {
-            ViewGroup.LayoutParams outer = original instanceof FrameLayout.LayoutParams
-                ? new FrameLayout.LayoutParams((FrameLayout.LayoutParams) original)
-                : original instanceof ViewGroup.MarginLayoutParams
-                    ? new ViewGroup.MarginLayoutParams((ViewGroup.MarginLayoutParams) original)
-                    : new ViewGroup.LayoutParams(original);
-            // A fixed old keyboard height must not clip the extra toolbar/panels.
-            outer.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            setLayoutParams(outer);
+        try {
+            ViewGroup.LayoutParams original = keyboard.getLayoutParams();
+            if (original != null) {
+                ViewGroup.LayoutParams outer = original instanceof FrameLayout.LayoutParams
+                    ? new FrameLayout.LayoutParams((FrameLayout.LayoutParams) original)
+                    : original instanceof ViewGroup.MarginLayoutParams
+                        ? new ViewGroup.MarginLayoutParams((ViewGroup.MarginLayoutParams) original)
+                        : new ViewGroup.LayoutParams(original);
+                // A fixed old keyboard height must not clip the extra toolbar/panels.
+                outer.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                setLayoutParams(outer);
+            }
+            tools = new LinearLayout(service);
+            tools.setOrientation(VERTICAL);
+            tools.setBackgroundColor(ToolbarViews.background(service));
+            addView(tools, new LayoutParams(-1, -2));
+            LinearLayout header = ToolbarViews.row(tools);
+            if (textEditing) {
+                editing = new TextEditingPanel(service);
+                editing.setVisibility(GONE);
+                editButton = ToolbarViews.button(header, "Text editing", "Show or hide text editing tools", view -> {
+                    boolean open = editing.getVisibility() != VISIBLE;
+                    reset();
+                    editing.setVisibility(open ? VISIBLE : GONE);
+                    ToolbarViews.selected(editButton, open);
+                });
+                tools.addView(editing);
+            }
+            if (microphone) {
+                voice = new OfflineVoicePanel(service);
+                voice.setVisibility(GONE);
+                voiceButton = ToolbarViews.button(header, "Offline mic", "Show or hide offline voice typing", view -> {
+                    boolean open = voice.getVisibility() != VISIBLE;
+                    reset();
+                    voice.setVisibility(open ? VISIBLE : GONE);
+                    ToolbarViews.selected(voiceButton, open);
+                    voice.refresh();
+                });
+                tools.addView(voice);
+            }
+            // MATCH_PARENT on an inner input view would consume the toolbar's space as well.
+            int height = original != null && original.height >= 0 ? original.height : ViewGroup.LayoutParams.WRAP_CONTENT;
+            int width = original != null && original.width >= 0 ? original.width : ViewGroup.LayoutParams.MATCH_PARENT;
+            addView(keyboard, new LayoutParams(width, height));
+        } catch (Throwable t) {
+            throw new RuntimeException("KeyboardToolbar init failed", t);
         }
-        tools = new LinearLayout(service);
-        tools.setOrientation(VERTICAL);
-        tools.setBackgroundColor(ToolbarViews.background(service));
-        addView(tools, new LayoutParams(-1, -2));
-        LinearLayout header = ToolbarViews.row(tools);
-        if (textEditing) {
-            editing = new TextEditingPanel(service);
-            editing.setVisibility(GONE);
-            editButton = ToolbarViews.button(header, "Text editing", "Show or hide text editing tools", view -> {
-                boolean open = editing.getVisibility() != VISIBLE;
-                reset();
-                editing.setVisibility(open ? VISIBLE : GONE);
-                ToolbarViews.selected(editButton, open);
-            });
-            tools.addView(editing);
-        }
-        if (microphone) {
-            voice = new OfflineVoicePanel(service);
-            voice.setVisibility(GONE);
-            voiceButton = ToolbarViews.button(header, "Offline mic", "Show or hide offline voice typing", view -> {
-                boolean open = voice.getVisibility() != VISIBLE;
-                reset();
-                voice.setVisibility(open ? VISIBLE : GONE);
-                ToolbarViews.selected(voiceButton, open);
-                voice.refresh();
-            });
-            tools.addView(voice);
-        }
-        // MATCH_PARENT on an inner input view would consume the toolbar's space as well.
-        int height = original != null && original.height >= 0 ? original.height : ViewGroup.LayoutParams.WRAP_CONTENT;
-        int width = original != null && original.width >= 0 ? original.width : ViewGroup.LayoutParams.MATCH_PARENT;
-        addView(keyboard, new LayoutParams(width, height));
     }
 
     public static View wrap(InputMethodService service, View keyboard) {
@@ -104,69 +108,96 @@ public final class KeyboardToolbar extends LinearLayout {
             KeyboardToolbar wrapper = new KeyboardToolbar(service, keyboard, editing, voice);
             current = new WeakReference<>(wrapper);
             return wrapper;
-        } catch (Exception | LinkageError e) {
-            // A tools UI failure must not prevent the original keyboard from opening.
-            if (keyboard.getParent() instanceof KeyboardToolbar) {
-                ((KeyboardToolbar) keyboard.getParent()).removeView(keyboard);
+        } catch (Throwable t) {
+            // A tools UI failure must never prevent the original keyboard from opening.
+            try {
+                if (keyboard.getParent() instanceof ViewGroup) {
+                    ((ViewGroup) keyboard.getParent()).removeView(keyboard);
+                }
+            } catch (Throwable ignored) {
             }
             return keyboard;
         }
     }
 
     public static void resetForInput(InputMethodService service) {
-        KeyboardToolbar toolbar = current.get();
-        if (toolbar != null && toolbar.service == service) toolbar.reset();
+        try {
+            KeyboardToolbar toolbar = current.get();
+            if (toolbar != null && toolbar.service == service) toolbar.reset();
+        } catch (Throwable ignored) {
+        }
     }
 
     public static void includeToolsInInsets(InputMethodService service, InputMethodService.Insets insets) {
-        KeyboardToolbar toolbar = current.get();
-        if (toolbar == null || toolbar.service != service || !toolbar.isShown()) return;
-        int[] location = new int[2];
-        toolbar.tools.getLocationInWindow(location);
-        Rect bounds = new Rect(location[0], location[1], location[0] + toolbar.tools.getWidth(),
-            location[1] + toolbar.tools.getHeight());
-        insets.contentTopInsets = Math.min(insets.contentTopInsets, bounds.top);
-        insets.visibleTopInsets = Math.min(insets.visibleTopInsets, bounds.top);
-        if (insets.touchableInsets == InputMethodService.Insets.TOUCHABLE_INSETS_REGION) {
-            insets.touchableRegion.op(bounds, Region.Op.UNION);
+        try {
+            KeyboardToolbar toolbar = current.get();
+            if (toolbar == null || toolbar.service != service || !toolbar.isShown()) return;
+            int[] location = new int[2];
+            toolbar.tools.getLocationInWindow(location);
+            Rect bounds = new Rect(location[0], location[1], location[0] + toolbar.tools.getWidth(),
+                location[1] + toolbar.tools.getHeight());
+            insets.contentTopInsets = Math.min(insets.contentTopInsets, bounds.top);
+            insets.visibleTopInsets = Math.min(insets.visibleTopInsets, bounds.top);
+            if (insets.touchableInsets == InputMethodService.Insets.TOUCHABLE_INSETS_REGION) {
+                insets.touchableRegion.op(bounds, Region.Op.UNION);
+            }
+        } catch (Throwable ignored) {
         }
     }
 
     public static boolean isSensitive(InputMethodService service) {
-        EditorInfo editor = service.getCurrentInputEditorInfo();
-        if (editor == null) return true;
-        int type = editor.inputType & InputType.TYPE_MASK_CLASS;
-        int variation = editor.inputType & InputType.TYPE_MASK_VARIATION;
-        return type == InputType.TYPE_CLASS_TEXT && (variation == InputType.TYPE_TEXT_VARIATION_PASSWORD
-            || variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-            || variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD)
-            || type == InputType.TYPE_CLASS_NUMBER && variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD;
+        try {
+            EditorInfo editor = service.getCurrentInputEditorInfo();
+            if (editor == null) return true;
+            int type = editor.inputType & InputType.TYPE_MASK_CLASS;
+            int variation = editor.inputType & InputType.TYPE_MASK_VARIATION;
+            return type == InputType.TYPE_CLASS_TEXT && (variation == InputType.TYPE_TEXT_VARIATION_PASSWORD
+                || variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                || variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD)
+                || type == InputType.TYPE_CLASS_NUMBER && variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD;
+        } catch (Throwable ignored) {
+            return true;
+        }
     }
 
+    /** Fail closed: an unreadable editor/keyboard state must never enable dictation. */
     public static boolean canRecord() {
-        KeyboardToolbar toolbar = current.get();
-        return toolbar != null && toolbar.voice != null && toolbar.isShown()
-            && toolbar.service.isInputViewShown() && toolbar.service.getCurrentInputConnection() != null
-            && !isSensitive(toolbar.service);
+        try {
+            KeyboardToolbar toolbar = current.get();
+            return toolbar != null && toolbar.voice != null && toolbar.isShown()
+                && toolbar.service.isInputViewShown() && toolbar.service.getCurrentInputConnection() != null
+                && !isSensitive(toolbar.service);
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     public static void showVoicePanel() {
         MAIN.post(() -> {
-            KeyboardToolbar toolbar = current.get();
-            if (toolbar == null || toolbar.voice == null) return;
-            toolbar.reset();
-            toolbar.voice.setVisibility(VISIBLE);
-            ToolbarViews.selected(toolbar.voiceButton, true);
-            toolbar.voice.refresh();
+            try {
+                KeyboardToolbar toolbar = current.get();
+                if (toolbar == null || toolbar.voice == null) return;
+                toolbar.reset();
+                toolbar.voice.setVisibility(VISIBLE);
+                ToolbarViews.selected(toolbar.voiceButton, true);
+                toolbar.voice.refresh();
+            } catch (Throwable ignored) {
+            }
         });
     }
 
     private void reset() {
-        if (editing != null) { editing.reset(); editing.setVisibility(GONE); }
-        if (voice != null) { voice.reset(); voice.setVisibility(GONE); }
-        if (editButton != null) ToolbarViews.selected(editButton, false);
-        if (voiceButton != null) ToolbarViews.selected(voiceButton, false);
-        OfflineRecognitionService.cancelForKeyboard();
+        try {
+            if (editing != null) { editing.reset(); editing.setVisibility(GONE); }
+            if (voice != null) { voice.reset(); voice.setVisibility(GONE); }
+            if (editButton != null) ToolbarViews.selected(editButton, false);
+            if (voiceButton != null) ToolbarViews.selected(voiceButton, false);
+        } catch (Throwable ignored) {
+        }
+        try {
+            OfflineRecognitionService.cancelForKeyboard();
+        } catch (Throwable ignored) {
+        }
     }
 
     @Override protected void onWindowVisibilityChanged(int visibility) {
