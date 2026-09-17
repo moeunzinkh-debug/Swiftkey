@@ -2,14 +2,15 @@ package app.morphe.extension.swiftkey.toolbar;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.VectorDrawable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
@@ -115,28 +116,20 @@ final class ToolbarViews {
     /** Monochrome microphone glyph matching the native toolbar icon style. */
     static Drawable micIcon(Context context, int color) {
         try {
-            VectorDrawable.Builder builder = new VectorDrawable.Builder();
-            builder.setWidth(24);
-            builder.setHeight(24);
-            builder.setviewportWidth(24);
-            builder.setviewportHeight(24);
+            Bitmap bitmap = iconBitmap(context);
+            float s = bitmap.getWidth() / 24f;
+            Canvas canvas = new Canvas(bitmap);
+            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            paint.setColor(color);
             // Mic body (capsule), stem and base — filled.
-            Path body = new Path();
-            body.addRoundRect(new RectF(9f, 3f, 15f, 13f), 3f, 3f, Path.Direction.CW);
-            body.addRoundRect(new RectF(11f, 17f, 13f, 20f), 1f, 1f, Path.Direction.CW);
-            body.addRoundRect(new RectF(8.5f, 19.5f, 15.5f, 21f), 1f, 1f, Path.Direction.CW);
-            Paint fill = new Paint();
-            fill.setColor(color);
-            builder.addPath(body, fill);
+            canvas.drawRoundRect(new RectF(9 * s, 3 * s, 15 * s, 13 * s), 3 * s, 3 * s, paint);
+            canvas.drawRoundRect(new RectF(11 * s, 17 * s, 13 * s, 20 * s), 1 * s, 1 * s, paint);
+            canvas.drawRoundRect(new RectF(8.5f * s, 19.5f * s, 15.5f * s, 21 * s), 1 * s, 1 * s, paint);
             // Cradle arc — stroked.
-            Path arc = new Path();
-            arc.addArc(new RectF(5.5f, 4.5f, 18.5f, 17.5f), 0f, 180f);
-            Paint stroke = new Paint();
-            stroke.setColor(color);
-            stroke.setStyle(Paint.Style.STROKE);
-            stroke.setStrokeWidth(2f);
-            builder.addPath(arc, stroke);
-            return builder.build();
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(2 * s);
+            canvas.drawArc(new RectF(5.5f * s, 4.5f * s, 18.5f * s, 17.5f * s), 0f, 180f, false, paint);
+            return bitmapDrawable(context, bitmap);
         } catch (Throwable t) {
             return new GradientDrawable();
         }
@@ -145,21 +138,34 @@ final class ToolbarViews {
     /** Monochrome "text lines" glyph matching the native toolbar icon style. */
     static Drawable textIcon(Context context, int color) {
         try {
-            VectorDrawable.Builder builder = new VectorDrawable.Builder();
-            builder.setWidth(24);
-            builder.setHeight(24);
-            builder.setviewportWidth(24);
-            builder.setviewportHeight(24);
-            Path path = new Path();
-            path.addRoundRect(new RectF(3f, 5f, 21f, 8f), 1.5f, 1.5f, Path.Direction.CW);
-            path.addRoundRect(new RectF(3f, 10.5f, 21f, 13.5f), 1.5f, 1.5f, Path.Direction.CW);
-            path.addRoundRect(new RectF(3f, 16f, 14f, 19f), 1.5f, 1.5f, Path.Direction.CW);
-            Paint paint = new Paint();
+            Bitmap bitmap = iconBitmap(context);
+            float s = bitmap.getWidth() / 24f;
+            Canvas canvas = new Canvas(bitmap);
+            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
             paint.setColor(color);
-            builder.addPath(path, paint);
-            return builder.build();
+            canvas.drawRoundRect(new RectF(3 * s, 5 * s, 21 * s, 8 * s), 1.5f * s, 1.5f * s, paint);
+            canvas.drawRoundRect(new RectF(3 * s, 10.5f * s, 21 * s, 13.5f * s), 1.5f * s, 1.5f * s, paint);
+            canvas.drawRoundRect(new RectF(3 * s, 16 * s, 14 * s, 19 * s), 1.5f * s, 1.5f * s, paint);
+            return bitmapDrawable(context, bitmap);
         } catch (Throwable t) {
             return new GradientDrawable();
         }
+    }
+
+    /** 24dp icon canvas, scaled by density so the glyph stays crisp. */
+    private static Bitmap iconBitmap(Context context) {
+        float density = 2f;
+        try {
+            density = context.getResources().getDisplayMetrics().density;
+        } catch (Throwable ignored) {
+        }
+        int size = Math.max(24, Math.round(24 * density));
+        return Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+    }
+
+    private static Drawable bitmapDrawable(Context context, Bitmap bitmap) {
+        BitmapDrawable drawable = new BitmapDrawable(context.getResources(), bitmap);
+        drawable.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        return drawable;
     }
 }

@@ -9,14 +9,14 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.RectF;
-import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.VectorDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -171,7 +171,7 @@ public final class PatchesSettings {
         View icon = new View(activity);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(activity, 24), dp(activity, 24));
         iconParams.setMarginEnd(dp(activity, 16));
-        icon.setBackground(crossIcon(foreground));
+        icon.setBackground(crossIcon(activity, foreground));
         inner.addView(icon, iconParams);
 
         LinearLayout texts = new LinearLayout(activity);
@@ -282,27 +282,29 @@ public final class PatchesSettings {
     }
 
     /** Monochrome "medical cross" icon, matching the settings list icon style. */
-    private static Drawable crossIcon(int color) {
+    private static Drawable crossIcon(Context context, int color) {
         try {
-            VectorDrawable.Builder builder = new VectorDrawable.Builder();
-            builder.setWidth(24);
-            builder.setHeight(24);
-            builder.setviewportWidth(24);
-            builder.setviewportHeight(24);
-            Path ring = new Path();
-            ring.addCircle(12f, 12f, 9.5f, Path.Direction.CW);
-            Paint ringPaint = new Paint();
+            float density = 2f;
+            try {
+                density = context.getResources().getDisplayMetrics().density;
+            } catch (Throwable ignored) {
+            }
+            int size = Math.max(24, Math.round(24 * density));
+            Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+            float s = size / 24f;
+            Canvas canvas = new Canvas(bitmap);
+            Paint ringPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             ringPaint.setColor(color);
             ringPaint.setStyle(Paint.Style.STROKE);
-            ringPaint.setStrokeWidth(2f);
-            builder.addPath(ring, ringPaint);
-            Path plus = new Path();
-            plus.addRoundRect(new RectF(10.6f, 6.8f, 13.4f, 17.2f), 1.4f, 1.4f, Path.Direction.CW);
-            plus.addRoundRect(new RectF(6.8f, 10.6f, 17.2f, 13.4f), 1.4f, 1.4f, Path.Direction.CW);
-            Paint fill = new Paint();
+            ringPaint.setStrokeWidth(2 * s);
+            canvas.drawCircle(12 * s, 12 * s, 9.5f * s, ringPaint);
+            Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
             fill.setColor(color);
-            builder.addPath(plus, fill);
-            return builder.build();
+            canvas.drawRoundRect(new RectF(10.6f * s, 6.8f * s, 13.4f * s, 17.2f * s), 1.4f * s, 1.4f * s, fill);
+            canvas.drawRoundRect(new RectF(6.8f * s, 10.6f * s, 17.2f * s, 13.4f * s), 1.4f * s, 1.4f * s, fill);
+            BitmapDrawable drawable = new BitmapDrawable(context.getResources(), bitmap);
+            drawable.setBounds(0, 0, size, size);
+            return drawable;
         } catch (Throwable t) {
             return new GradientDrawable();
         }
