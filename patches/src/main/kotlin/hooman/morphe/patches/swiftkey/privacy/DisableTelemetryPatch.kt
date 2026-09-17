@@ -67,6 +67,9 @@ private val disableTelemetryResourcesPatch = resourcePatch(
             setMetaData("firebase_crashlytics_collection_enabled", "false")
             setMetaData("firebase_sessions_enabled", "false")
 
+            // Flag for the "Patches" settings entry (PatchesSettings reads it at runtime).
+            setMetaData("app.morphe.swiftkey.PATCH_disable_telemetry", "true")
+
             // These legacy Analytics components are separate from Firebase Messaging; disabling them
             // does not remove SwiftKey's FCM listener or Firebase installation support.
             disableComponent("receiver", "com.google.android.gms.analytics.AnalyticsReceiver")

@@ -1,10 +1,13 @@
 package hooman.morphe.patches.swiftkey.voice
 
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.patch.resourcePatch
 import hooman.morphe.patches.swiftkey.support.InvokeRedirect
 import hooman.morphe.patches.swiftkey.support.redirectInvokes
 import hooman.morphe.patches.swiftkey.support.swiftKeySupportManifestPatch
 import hooman.morphe.patches.swiftkey.swiftKeyCompatibility
+import hooman.morphe.patches.swiftkey.toolbar.application
+import hooman.morphe.patches.swiftkey.toolbar.metadata
 
 private const val EXTENSION = "Lapp/morphe/extension/swiftkey/MicSupport;"
 
@@ -40,6 +43,17 @@ private const val SPEECH_RECOGNIZER = "Landroid/speech/SpeechRecognizer;"
  * (Kõnele សម្រាប់ Vosk ក្រៅ​បណ្ដាញ​ទាំងស្រុង; ឬ Speech Recognition &amp; Synthesis) ហើយ
  * កំណត់​វា​ជា​ម៉ាស៊ីន​សម្គាល់​សំឡេង​លំនាំដើម​ក្នុង​ការកំណត់​ប្រព័ន្ធ។
  */
+/** Flag for the "Patches" settings entry (PatchesSettings reads it at runtime). */
+private val microphoneFixFlagPatch = resourcePatch {
+    compatibleWith(swiftKeyCompatibility)
+    execute {
+        document("AndroidManifest.xml").use { manifest ->
+            manifest.documentElement.application()
+                .metadata("app.morphe.swiftkey.PATCH_microphone_fix", "true")
+        }
+    }
+}
+
 @Suppress("unused")
 val fixMicrophoneVoiceInputPatch = bytecodePatch(
     name = "Fix microphone voice input",
@@ -50,7 +64,7 @@ val fixMicrophoneVoiceInputPatch = bytecodePatch(
         "first; the patch only removes the Google gate, it does not ship a speech engine.",
 ) {
     compatibleWith(swiftKeyCompatibility)
-    dependsOn(swiftKeySupportManifestPatch)
+    dependsOn(swiftKeySupportManifestPatch, microphoneFixFlagPatch)
     extendWith("extensions/swiftkey.mpe")
 
     execute {

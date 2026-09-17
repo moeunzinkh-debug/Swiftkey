@@ -3,8 +3,13 @@ package app.morphe.extension.swiftkey.toolbar;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.VectorDrawable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
@@ -94,5 +99,37 @@ final class ToolbarViews {
         button.setBackground(shape);
         button.setTextColor(selected ? Color.WHITE : foreground(context));
         button.setSelected(selected);
+    }
+
+    /** Selected state for a button living inside SwiftKey's native toolbar row. */
+    static void selectedNative(View button, boolean selected) {
+        if (button == null) return;
+        Context context = button.getContext();
+        GradientDrawable shape = new GradientDrawable();
+        shape.setCornerRadius(dp(context, 12));
+        shape.setColor(selected ? Color.rgb(32, 104, 205) : Color.TRANSPARENT);
+        button.setBackground(shape);
+        button.setSelected(selected);
+    }
+
+    /** Monochrome "text lines" glyph matching the native toolbar icon style. */
+    static Drawable textIcon(Context context, int color) {
+        try {
+            VectorDrawable.Builder builder = new VectorDrawable.Builder();
+            builder.setWidth(24);
+            builder.setHeight(24);
+            builder.setviewportWidth(24);
+            builder.setviewportHeight(24);
+            Path path = new Path();
+            path.addRoundRect(new RectF(3f, 5f, 21f, 8f), 1.5f, 1.5f, Path.Direction.CW);
+            path.addRoundRect(new RectF(3f, 10.5f, 21f, 13.5f), 1.5f, 1.5f, Path.Direction.CW);
+            path.addRoundRect(new RectF(3f, 16f, 14f, 19f), 1.5f, 1.5f, Path.Direction.CW);
+            Paint paint = new Paint();
+            paint.setColor(color);
+            builder.addPath(path, paint);
+            return builder.build();
+        } catch (Throwable t) {
+            return new GradientDrawable();
+        }
     }
 }
