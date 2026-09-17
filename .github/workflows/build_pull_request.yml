@@ -52,7 +52,47 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Build .mpp bundle
-        run: ./gradlew :patches:buildAndroid generatePatchesList --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew :patches:buildAndroid generatePatchesList --no-daemon 2>&1 | tee build-output.log || {
+            echo "::error::Gradle build failed — មើល log ក្រោម (tail 150)"
+            tail -150 build-output.log
+            exit 1
+          }
+
+      # បើ build បរាជ័យ ផ្ញើ log tail ទៅ PR comment ដើម្បីងាយ debug (log Actions មិនងាយទាញយក)
+      - name: Report build failure to PR
+        if: failure() && github.event_name == 'pull_request'
+        run: |
+          if [ -f build-output.log ]; then
+            tail -120 build-output.log > failure-tail.txt
+          else
+            echo "(no build log captured)" > failure-tail.txt
+          fi
+          python3 - "$GITHUB_TOKEN" "$GITHUB_REPOSITORY" "$GITHUB_EVENT_NUMBER" <<'PYEOF'
+          import json, sys, urllib.request
+          token, repo, number = sys.argv[1], sys.argv[2], sys.argv[3]
+          body = open("failure-tail.txt", encoding="utf-8").read().strip()
+          payload = json.dumps({
+              "body": "🤖 CI build failed (auto-report from `build_pull_request.yml`):\n\n```\n"
+                      + body[-9000:]
+                      + "\n```"
+          }).encode()
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{repo}/issues/{number}/comments",
+              data=payload,
+              headers={
+                  "Authorization": f"token {token}",
+                  "Accept": "application/vnd.github+json",
+                  "Content-Type": "application/json",
+                  "User-Agent": "build-pr-ci",
+              },
+          )
+          try:
+              urllib.request.urlopen(req, timeout=30)
+          except Exception as e:
+              print(f"could not post PR comment: {e}")
+          PYEOF
 
       # ត្រួតពិនិត្យថា bundle .mpp ចេញមែន ហើយបញ្ជូន path ពិតទៅ step ខាងក្រោម
       # (upload-artifact មិនស្គាល់ extglob ដូច !(*sources*) ទេ ដូច្នេះត្រូវដាក់ path ច្បាស់លាស់)
