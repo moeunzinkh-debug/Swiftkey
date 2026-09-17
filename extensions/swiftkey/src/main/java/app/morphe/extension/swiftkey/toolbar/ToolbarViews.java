@@ -15,16 +15,29 @@ final class ToolbarViews {
     private ToolbarViews() { }
 
     static int dp(Context context, int value) {
-        return Math.round(value * context.getResources().getDisplayMetrics().density);
+        try {
+            return Math.round(value * context.getResources().getDisplayMetrics().density);
+        } catch (Throwable ignored) {
+            return value * 2;
+        }
     }
 
     static boolean dark(Context context) {
-        return (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
-            == Configuration.UI_MODE_NIGHT_YES;
+        try {
+            return (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                == Configuration.UI_MODE_NIGHT_YES;
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
-    static int background(Context context) { return Color.rgb(dark(context) ? 29 : 242, dark(context) ? 32 : 245, dark(context) ? 39 : 250); }
-    static int foreground(Context context) { return dark(context) ? Color.WHITE : Color.rgb(28, 37, 50); }
+    static int background(Context context) {
+        return Color.rgb(dark(context) ? 29 : 242, dark(context) ? 32 : 245, dark(context) ? 39 : 250);
+    }
+
+    static int foreground(Context context) {
+        return dark(context) ? Color.WHITE : Color.rgb(28, 37, 50);
+    }
 
     static TextView label(Context context, String text) {
         TextView view = new TextView(context);
@@ -73,6 +86,7 @@ final class ToolbarViews {
     }
 
     static void selected(Button button, boolean selected) {
+        if (button == null) return;
         Context context = button.getContext();
         GradientDrawable shape = new GradientDrawable();
         shape.setCornerRadius(dp(context, 10));

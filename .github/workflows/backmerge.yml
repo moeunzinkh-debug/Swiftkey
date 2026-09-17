@@ -1,0 +1,44 @@
+name: Back-merge main into dev
+
+# ការដំណើរការដោយដៃសម្រាប់ជំហាន back-merge ដែល release.yml ធ្វើបន្ទាប់ពី release នីមួយៗ។
+# បើជំហាននោះបរាជ័យ dev នៅតែក្រោយ main ដោយស្ងាត់ៗ (v1.4.4 … v1.6.0 មិនបានចូល dev)
+# ហើយការ re-run job "Release" នឹងព្យាយាមចេញ release ម្ដងទៀត។ workflow នេះធ្វើតែការ
+# merge ទេ ដូច្នេះអាចចុច "Run workflow" បានតាមត្រូវការ ដោយគ្មាន release ថ្មី។
+on:
+  workflow_dispatch:
+
+jobs:
+  backmerge:
+    name: Back-merge
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      # សាកស្គ្រីបមុន — ដូចគ្នានឹង release.yml/build_pull_request.yml
+      - name: Test back-merge script
+        run: bash .github/scripts/test-backmerge-main-to-dev.sh
+
+      # wrapper នេះបញ្ចេញ log tail ជា ::error annotation ពេលបរាជ័យ ព្រោះ log ឆៅរបស់
+      # Actions មិនអាចទាញបានតាម REST API
+      - name: Back-merge main into dev
+        run: bash .github/scripts/backmerge-ci.sh
+
+      - name: Report dev state
+        if: always()
+        run: |
+          set -uo pipefail
+          git fetch --quiet origin main dev
+          behind="$(git rev-list --count origin/dev..origin/main)"
+          echo "::notice title=back-merge state::main=$(git rev-parse --short origin/main) dev=$(git rev-parse --short origin/dev) behind=${behind}"
+          if git merge-base --is-ancestor origin/main origin/dev; then
+            echo "✅ dev contains main."
+          else
+            echo "::error title=back-merge state::dev still does not contain main (${behind} commits behind)."
+            exit 1
+          fi

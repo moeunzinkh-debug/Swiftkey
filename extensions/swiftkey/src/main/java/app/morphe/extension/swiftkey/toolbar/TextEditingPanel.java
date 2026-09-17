@@ -1,5 +1,6 @@
 package app.morphe.extension.swiftkey.toolbar;
 
+import android.content.Context;
 import android.inputmethodservice.InputMethodService;
 import android.os.SystemClock;
 import android.view.InputDevice;
@@ -20,45 +21,65 @@ final class TextEditingPanel extends LinearLayout {
         super(service);
         setOrientation(VERTICAL);
         actions = new TextEditingActions(new TextEditingActions.Editor() {
-            @Override public boolean available() { return service.getCurrentInputConnection() != null; }
-            @Override public boolean sensitive() { return KeyboardToolbar.isSensitive(service); }
-            @Override public boolean navigate(Action action, boolean extend) {
-                InputConnection editor = service.getCurrentInputConnection();
-                if (editor == null) return false;
-                int key;
-                switch (action) {
-                    case LEFT: key = KeyEvent.KEYCODE_DPAD_LEFT; break;
-                    case RIGHT: key = KeyEvent.KEYCODE_DPAD_RIGHT; break;
-                    case UP: key = KeyEvent.KEYCODE_DPAD_UP; break;
-                    case DOWN: key = KeyEvent.KEYCODE_DPAD_DOWN; break;
-                    case HOME: key = KeyEvent.KEYCODE_MOVE_HOME; break;
-                    case END: key = KeyEvent.KEYCODE_MOVE_END; break;
-                    default: return false;
+            @Override public boolean available() {
+                try {
+                    return service.getCurrentInputConnection() != null;
+                } catch (Throwable ignored) {
+                    return false;
                 }
-                int meta = extend ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0;
-                long time = SystemClock.uptimeMillis();
-                editor.finishComposingText();
-                boolean down = editor.sendKeyEvent(new KeyEvent(time, time, KeyEvent.ACTION_DOWN, key, 0,
-                    meta, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, KeyEvent.FLAG_SOFT_KEYBOARD, InputDevice.SOURCE_KEYBOARD));
-                boolean up = editor.sendKeyEvent(new KeyEvent(time, time, KeyEvent.ACTION_UP, key, 0,
-                    meta, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, KeyEvent.FLAG_SOFT_KEYBOARD, InputDevice.SOURCE_KEYBOARD));
-                return down && up;
+            }
+            @Override public boolean sensitive() {
+                try {
+                    return KeyboardToolbar.isSensitive(service);
+                } catch (Throwable ignored) {
+                    return true;
+                }
+            }
+            @Override public boolean navigate(Action action, boolean extend) {
+                try {
+                    InputConnection editor = service.getCurrentInputConnection();
+                    if (editor == null) return false;
+                    int key;
+                    switch (action) {
+                        case LEFT: key = KeyEvent.KEYCODE_DPAD_LEFT; break;
+                        case RIGHT: key = KeyEvent.KEYCODE_DPAD_RIGHT; break;
+                        case UP: key = KeyEvent.KEYCODE_DPAD_UP; break;
+                        case DOWN: key = KeyEvent.KEYCODE_DPAD_DOWN; break;
+                        case HOME: key = KeyEvent.KEYCODE_MOVE_HOME; break;
+                        case END: key = KeyEvent.KEYCODE_MOVE_END; break;
+                        default: return false;
+                    }
+                    int meta = extend ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0;
+                    long time = SystemClock.uptimeMillis();
+                    editor.finishComposingText();
+                    boolean down = editor.sendKeyEvent(new KeyEvent(time, time, KeyEvent.ACTION_DOWN, key, 0,
+                        meta, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, KeyEvent.FLAG_SOFT_KEYBOARD, InputDevice.SOURCE_KEYBOARD));
+                    boolean up = editor.sendKeyEvent(new KeyEvent(time, time, KeyEvent.ACTION_UP, key, 0,
+                        meta, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, KeyEvent.FLAG_SOFT_KEYBOARD, InputDevice.SOURCE_KEYBOARD));
+                    return down && up;
+                } catch (Throwable ignored) {
+                    return false;
+                }
             }
             @Override public boolean contextAction(Action action) {
-                InputConnection editor = service.getCurrentInputConnection();
-                if (editor == null) return false;
-                int id;
-                switch (action) {
-                    case SELECT_ALL: id = android.R.id.selectAll; break;
-                    case CUT: id = android.R.id.cut; break;
-                    case COPY: id = android.R.id.copy; break;
-                    case PASTE: id = android.R.id.paste; break;
-                    case UNDO: id = android.R.id.undo; break;
-                    case REDO: id = android.R.id.redo; break;
-                    default: return false;
+                try {
+                    InputConnection editor = service.getCurrentInputConnection();
+                    if (editor == null) return false;
+                    int id;
+                    switch (action) {
+                        case SELECT_ALL: id = android.R.id.selectAll; break;
+                        case CUT: id = android.R.id.cut; break;
+                        case COPY: id = android.R.id.copy; break;
+                        case PASTE: id = android.R.id.paste; break;
+                        case UNDO: id = android.R.id.undo; break;
+                        case REDO: id = android.R.id.redo; break;
+                        default: return false;
+                    }
+                    editor.finishComposingText();
+                    return editor.performContextMenuAction(id);
+                } catch (Throwable ignored) {
+                    return false;
                 }
-                editor.finishComposingText();
-                return editor.performContextMenuAction(id);
             }
         });
         LinearLayout navigation = ToolbarViews.row(this);
@@ -84,7 +105,7 @@ final class TextEditingPanel extends LinearLayout {
                 if (!actions.perform(action)) {
                     Toast.makeText(getContext(), "This editor does not allow that action.", Toast.LENGTH_SHORT).show();
                 }
-            } catch (RuntimeException ignored) {
+            } catch (Throwable ignored) {
                 actions.reset();
             }
             ToolbarViews.selected(select, actions.isSelecting());
@@ -92,7 +113,10 @@ final class TextEditingPanel extends LinearLayout {
     }
 
     void reset() {
-        actions.reset();
-        ToolbarViews.selected(select, false);
+        try {
+            actions.reset();
+            ToolbarViews.selected(select, false);
+        } catch (Throwable ignored) {
+        }
     }
 }

@@ -31,6 +31,23 @@ jobs:
       - name: Test back-merge script
         run: bash .github/scripts/test-backmerge-main-to-dev.sh
 
+      # ត្រួតពិនិត្យ marker របស់ README មុនពេល release — generate_patches_readme.py
+      # ចេញ exit 1 បើ <!-- PATCHES_END --> បាត់ ហើយវានៅក្នុង prepareCmd របស់
+      # semantic-release ដូច្នេះ release ទាំងមូលនឹងបរាជ័យ។ កំហុសនេះធ្លាប់កើតហើយ
+      # (commit "Change Readme" លុប marker ចេញដោយដៃ) — ចាប់វានៅទីនេះជាមុនសិន។
+      - name: Verify README patch markers
+        run: |
+          set -euo pipefail
+          if ! grep -qE '<!-- PATCHES_START( EXPANDED)? -->' README.md; then
+            echo "::error::README.md បាត់ <!-- PATCHES_START --> — សូមដាក់វាត្រឡប់មុនពេលចេញ release"
+            exit 1
+          fi
+          if ! grep -qF '<!-- PATCHES_END -->' README.md; then
+            echo "::error::README.md បាត់ <!-- PATCHES_END --> — សូមដាក់វាត្រឡប់មុនពេលចេញ release"
+            exit 1
+          fi
+          echo "✅ README markers intact"
+
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -167,6 +184,36 @@ jobs:
       #    ដូច្នេះបើវាបរាជ័យ ក៏ release + .mpp + attestation + artifact បានចេញរួចហើយដែរ។
       #    មុននេះវាជា plugin `success` របស់ semantic-release ដូច្នេះ conflict នៅ dev
       #    ធ្វើឲ្យ step "Release" បរាជ័យ ហើយ Attest/Upload .mpp ត្រូវរំលងទាំងស្រុង។
+      #    Conflict លើឯកសារ release (CHANGELOG/README/gradle.properties/patches-*.json)
+      #    ត្រូវបានដោះស្រាយដោយរក្សាទុកកំណែរបស់ dev។ ចំណែកឯកសារប្រភពដែល dev សរសេរ
+      #    ឡើងវិញដោយចេតនា (ឧ. MicSupport.java) ត្រូវបានចុះបញ្ជី allow-list នៅក្នុង
+      #    ស្គ្រីប — ក្រៅពីនោះស្គ្រីបឈប់ ហើយបញ្ចេញ ::error:: ឲ្យមនុស្សសម្រេចចិត្ត។
       - name: Back-merge main into dev
+        id: backmerge
         if: steps.release.outputs.new_release_published == 'true' && github.ref_name == 'main'
-        run: bash .github/scripts/backmerge-main-to-dev.sh
+        run: |
+          set -euo pipefail
+          # ដំណើរការពី clone ស្អាត មិនមែនពី worktree របស់ release ទេ៖ worktree នោះនៅ
+          # សល់កាកសំណល់ npm/gradle/semantic-release ដែលអាចធ្វើឲ្យ `git switch` ទៅ dev
+          # បដិសេធមិនដំណើរការ។ (run 35048531358 របស់ v1.6.0 បរាជ័យក្នុងរយៈពេល ~1 វិនាទី
+          # ដោយមិនបានដល់ជំហាន merge ឡើយ។)
+          origin_url="$(git remote get-url origin)"
+          workdir="$(mktemp -d)"
+          git clone --quiet "$origin_url" "$workdir/repo"
+          cd "$workdir/repo"
+          bash .github/scripts/backmerge-ci.sh
+
+      # រាយការណ៍ស្ថានភាព dev ជា annotation — អាចអានបានតាម API ទោះបើ log ឆៅមិនអាចទាញបាន
+      - name: Report dev state
+        if: always() && steps.backmerge.conclusion != 'skipped'
+        run: |
+          set -uo pipefail
+          git fetch --quiet origin main dev
+          behind="$(git rev-list --count origin/dev..origin/main)"
+          echo "::notice title=back-merge state::main=$(git rev-parse --short origin/main) dev=$(git rev-parse --short origin/dev) behind=${behind}"
+          if git merge-base --is-ancestor origin/main origin/dev; then
+            echo "✅ dev contains main."
+          else
+            echo "::error title=back-merge state::dev still does not contain main (${behind} commits behind)."
+            exit 1
+          fi
