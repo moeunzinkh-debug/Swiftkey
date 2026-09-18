@@ -13,6 +13,10 @@ PATCHES = ROOT / "patches/src/main/kotlin/hooman/morphe/patches"
 SOURCES = PATCHES / "swiftkey"
 EXTENSIONS = ROOT / "extensions/swiftkey/src/main/java/app/morphe/extension/swiftkey"
 EXPECTED = {"Text editing toolbar", "Offline microphone"}
+# Named SwiftKey patches that are settings UI rather than keyboard features: they must exist
+# in the source tree and the generated catalogue, but they are exempt from the feature shape
+# contract (Bytecode+Resource dependencies, minSdk 26) asserted for EXPECTED below.
+SETTINGS_PATCHES = {"Patches"}
 
 
 def source_descriptions(directory=SOURCES):
@@ -32,11 +36,11 @@ def source_descriptions(directory=SOURCES):
 
 
 class FeatureScopeTests(unittest.TestCase):
-    def test_only_two_named_patches(self):
-        self.assertEqual(set(source_descriptions()), EXPECTED)
+    def test_named_swiftkey_patches(self):
+        self.assertEqual(set(source_descriptions()), EXPECTED | SETTINGS_PATCHES)
         named_count = sum(len(re.findall(r'\b(?:bytecodePatch|resourcePatch)\(\s*name\s*=', p.read_text()))
                           for p in SOURCES.rglob("*.kt"))
-        self.assertEqual(named_count, 2)
+        self.assertEqual(named_count, len(EXPECTED | SETTINGS_PATCHES))
 
     def test_catalogue_matches_source(self):
         # patches-list.json is (re)written by `./gradlew generatePatchesList`, which loads EVERY
