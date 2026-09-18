@@ -50,7 +50,3 @@ node_modules/
 
 ### VS Code
 .vscode/
-
-### Python (CI scripts)
-__pycache__/
-*.pyc
