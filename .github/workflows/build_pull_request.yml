@@ -52,7 +52,39 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Build .mpp bundle
-        run: ./gradlew :patches:buildAndroid generatePatchesList --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew :patches:buildAndroid generatePatchesList --no-daemon 2>&1 | tee build-output.log || {
+            echo "::error::Gradle build failed — មើល log ក្រោម (tail 150)"
+            tail -150 build-output.log
+            exit 1
+          }
+
+      # បើ build បរាជ័យ បង្ហាញ log tail ជា check annotations + step summary
+      # (log Actions មិនងាយទាញយកពីខាងក្រៅ — annotations អានបានតាម API)
+      - name: Report build failure log
+        if: failure()
+        run: |
+          if [ ! -f build-output.log ]; then
+            echo "::error title=CI-build-log::no build log captured"
+            exit 0
+          fi
+          # បាជិលជួរសំខាន់ៗ + ជួរចុងក្រោយ ជា annotations (មើលបានក្នុង UI និង API)
+          # (ដក « :: » ចេញ បើមិនដូច្នេះវាបំផ្លាញទម្រង់ annotation)
+          grep -aE "^e: |FAILED|error:|Caused by|Exception|What went wrong|symbol:" build-output.log \
+            | tail -40 | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error title=CI-build-log::$(printf '%s' "${line:0:400}" | tr -d '\r' | sed 's/::/ /g')"
+          done
+          echo "---- last 25 lines ----"
+          tail -25 build-output.log | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error title=CI-log-tail::$(printf '%s' "${line:0:400}" | tr -d '\r' | sed 's/::/ /g')"
+          done
+          {
+            echo "## CI build failure — log tail (60)"
+            echo '```'
+            tail -60 build-output.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # ត្រួតពិនិត្យថា bundle .mpp ចេញមែន ហើយបញ្ជូន path ពិតទៅ step ខាងក្រោម
       # (upload-artifact មិនស្គាល់ extglob ដូច !(*sources*) ទេ ដូច្នេះត្រូវដាក់ path ច្បាស់លាស់)
