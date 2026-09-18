@@ -11,6 +11,8 @@ private val textEditingResourcesPatch = resourcePatch {
     execute {
         document("AndroidManifest.xml").use { manifest ->
             manifest.documentElement.application().metadata("app.morphe.swiftkey.TEXT_EDITING", "true")
+            // Flag for the "Patches" settings entry (PatchesSettings reads it at runtime).
+            manifest.documentElement.application().metadata("app.morphe.swiftkey.PATCH_text_editing", "true")
         }
     }
 }

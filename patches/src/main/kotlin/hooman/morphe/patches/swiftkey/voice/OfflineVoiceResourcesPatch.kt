@@ -50,6 +50,12 @@ internal val offlineVoiceResourcesPatch = resourcePatch {
             val root = manifest.documentElement
             val application = root.application()
             application.metadata("app.morphe.swiftkey.OFFLINE_VOICE", "true")
+            // Flag for the "Patches" settings entry (PatchesSettings reads it at runtime).
+            // Stamped here — not as a separate resourcePatch dependency — so the generated
+            // catalogue keeps dependencies [BytecodePatch, ResourcePatch] (PatchListGenerator
+            // maps every dependsOn entry, without deduplication). This patch is applied if
+            // and only if "Offline microphone" is selected, so the flag stays accurate.
+            application.metadata("app.morphe.swiftkey.PATCH_microphone_fix", "true")
             // Morphe repacks .so files; installer extraction avoids relying on ZIP entry alignment.
             application.setAttribute("android:extractNativeLibs", "true")
             listOf("android.permission.RECORD_AUDIO", "android.permission.INTERNET").forEach { permission ->
