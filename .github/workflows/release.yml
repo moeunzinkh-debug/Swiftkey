@@ -48,6 +48,12 @@ jobs:
           fi
           echo "✅ README markers intact"
 
+      # សាកល្បងក្បួនស្វែងរក launcher activity របស់បំណះ "Patches" មុន build — ដូចគ្នានឹង
+      # build_pull_request.yml ដើម្បីកុំឲ្យមាន release ដែលបំណះ "Patches" បរាជ័យលើ manifest
+      # ដែលវាមិនស្គាល់ (កំហុស "no launcher activity found in the manifest")។
+      - name: Test Patches launcher discovery
+        run: python3 .github/scripts/test_launcher_discovery.py
+
       - name: Setup Java
         uses: actions/setup-java@v5
         with:

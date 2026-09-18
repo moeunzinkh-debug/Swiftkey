@@ -41,6 +41,13 @@ jobs:
           fi
           echo "✅ README markers intact"
 
+      # សាកល្បងក្បួនស្វែងរក launcher activity របស់បំណះ "Patches" (Python សុទ្ធ មិនត្រូវការ Java)។
+      # កំហុស "no launcher activity found in the manifest" ធ្លាប់បំផ្លាញការ patch ទាំងមូល ដូច្នេះ
+      # ស្គ្រីបនេះការពារមិនឲ្យរបៀបអាន manifest រួមតូចម្ដងទៀត និងផ្ទៀងផ្ទាត់ថា mirror មិន
+      # ឃ្លាតពីកូដ Kotlin។
+      - name: Test Patches launcher discovery
+        run: python3 .github/scripts/test_launcher_discovery.py
+
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
