@@ -1,13 +1,10 @@
 package hooman.morphe.patches.swiftkey.voice
 
 import app.morphe.patcher.patch.bytecodePatch
-import app.morphe.patcher.patch.resourcePatch
 import hooman.morphe.patches.swiftkey.support.InvokeRedirect
 import hooman.morphe.patches.swiftkey.support.redirectInvokes
 import hooman.morphe.patches.swiftkey.swiftKeyCompatibility
-import hooman.morphe.patches.swiftkey.toolbar.application
 import hooman.morphe.patches.swiftkey.toolbar.keyboardToolbarPatch
-import hooman.morphe.patches.swiftkey.toolbar.metadata
 
 private const val EXTENSION = "Lapp/morphe/extension/swiftkey/MicSupport;"
 private const val CONTEXT = "Landroid/content/Context;"
@@ -18,17 +15,6 @@ private const val FLAGS = "Landroid/content/pm/PackageManager\$PackageInfoFlags;
 private const val RECOGNIZER = "Landroid/speech/SpeechRecognizer;"
 private const val STRING = "Ljava/lang/String;"
 
-/** Flag for the "Patches" settings entry (PatchesSettings reads it at runtime). */
-private val microphoneFixFlagPatch = resourcePatch {
-    compatibleWith(swiftKeyCompatibility)
-    execute {
-        document("AndroidManifest.xml").use { manifest ->
-            manifest.documentElement.application()
-                .metadata("app.morphe.swiftkey.PATCH_microphone_fix", "true")
-        }
-    }
-}
-
 @Suppress("unused")
 val fixMicrophoneVoiceInputPatch = bytecodePatch(
     name = "Offline microphone",
@@ -38,7 +24,7 @@ val fixMicrophoneVoiceInputPatch = bytecodePatch(
         "Also redirects SwiftKey's Android SpeechRecognizer path; Microsoft Azure voice typing is not modified.",
 ) {
     compatibleWith(swiftKeyCompatibility)
-    dependsOn(keyboardToolbarPatch, offlineVoiceResourcesPatch, microphoneFixFlagPatch)
+    dependsOn(keyboardToolbarPatch, offlineVoiceResourcesPatch)
 
     execute {
         // The new toolbar mic works independently. Redirect the stock Android speech path where
