@@ -71,12 +71,12 @@ jobs:
           fi
           # បាជិលជួរសំខាន់ៗ + ជួរចុងក្រោយ ជា annotations (មើលបានក្នុង UI និង API)
           # (ដក « :: » ចេញ បើមិនដូច្នេះវាបំផ្លាញទម្រង់ annotation)
-          grep -aE "FAILED|error:|Caused by|Exception|What went wrong" build-output.log \
-            | tail -25 | while IFS= read -r line; do
+          grep -aE "^e: |FAILED|error:|Caused by|Exception|What went wrong|symbol:" build-output.log \
+            | tail -40 | while IFS= read -r line; do
             [ -n "$line" ] && echo "::error title=CI-build-log::$(printf '%s' "${line:0:400}" | tr -d '\r' | sed 's/::/ /g')"
           done
-          echo "---- last 15 lines ----"
-          tail -15 build-output.log | while IFS= read -r line; do
+          echo "---- last 25 lines ----"
+          tail -25 build-output.log | while IFS= read -r line; do
             [ -n "$line" ] && echo "::error title=CI-log-tail::$(printf '%s' "${line:0:400}" | tr -d '\r' | sed 's/::/ /g')"
           done
           {
