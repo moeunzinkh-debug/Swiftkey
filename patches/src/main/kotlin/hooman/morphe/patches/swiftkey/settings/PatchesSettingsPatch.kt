@@ -31,6 +31,12 @@ private const val ACTION_MAIN = "android.intent.action.MAIN"
 private const val CATEGORY_LAUNCHER = "android.intent.category.LAUNCHER"
 private const val FLAG_SETTINGS_UI = "app.morphe.swiftkey.PATCH_settings_ui"
 
+/**
+ * Prefix of the classes this bundle injects. They are excluded from launcher discovery so a
+ * re-patched APK can never mistake our own Patches screen for the app's settings screen.
+ */
+private const val EXTENSION_PACKAGE = "app.morphe.extension."
+
 /** How many components the skip diagnostic prints before trailing off with an ellipsis. */
 private const val DIAGNOSTIC_LIMIT = 12
 
@@ -69,8 +75,13 @@ internal class LauncherCandidate(
  */
 internal fun rankLauncherCandidates(components: List<LauncherCandidate>): List<LauncherCandidate> {
     // A component the platform will never start cannot host the settings row, so `enabled=false`
-    // entries drop out before the tiers are consulted rather than being hooked pointlessly.
-    val named = components.filter { it.className.isNotBlank() && it.enabled }
+    // entries drop out before the tiers are consulted rather than being hooked pointlessly. Our
+    // own injected screens are excluded too: on a re-patched APK PatchesActivity is a plain
+    // activity with no launcher contract, and tier 3 would otherwise hook the Patches row into
+    // the very screen it opens.
+    val named = components.filter {
+        it.className.isNotBlank() && it.enabled && !it.className.startsWith(EXTENSION_PACKAGE)
+    }
 
     // Tier 1 — the Android launcher contract proper. Actions and categories are unioned across
     // every intent-filter of the component, so MAIN and LAUNCHER declared in separate filters
@@ -189,7 +200,7 @@ internal val patchesSettingsManifestPatch = resourcePatch {
             application.metadata(FLAG_SETTINGS_UI, "true")
 
             // The Patches settings screen (applied patches list + offline mic settings).
-            val activityClass = "app.morphe.extension.swiftkey.PatchesActivity"
+            val activityClass = EXTENSION_PACKAGE + "swiftkey.PatchesActivity"
             val hasActivity = application.children("activity")
                 .any { attr(it, "name") == activityClass }
             if (!hasActivity) {

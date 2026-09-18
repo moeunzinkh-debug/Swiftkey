@@ -52,6 +52,7 @@ ACTION_MAIN = "android.intent.action.MAIN"
 CATEGORY_LAUNCHER = "android.intent.category.LAUNCHER"
 PACKAGE = "com.touchtype.swiftkey"
 NS = "android"  # the prefix ToolbarManifestPatch.kt tries first
+EXTENSION_PACKAGE = "app.morphe.extension."  # our own injected classes, never a hook target
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 KOTLIN_PATCH = REPO_ROOT / "patches/src/main/kotlin/hooman/morphe/patches/swiftkey/settings/PatchesSettingsPatch.kt"
@@ -214,7 +215,8 @@ def collect_components(application: ET.Element, package_name: str) -> list[Launc
 
 
 def rank_launcher_candidates(components: list[LauncherCandidate]) -> list[LauncherCandidate]:
-    named = [c for c in components if c.class_name.strip() and c.enabled]
+    named = [c for c in components
+             if c.class_name.strip() and c.enabled and not c.class_name.startswith(EXTENSION_PACKAGE)]
 
     # Tier 1 - the Android launcher contract proper.
     strict = [c for c in named if c.has_launcher_category and c.has_main]
@@ -461,6 +463,18 @@ CASES: list[dict] = [
         <activity android:name="com.touchtype.swiftkey.MainActivity" android:exported="true" />
         <activity-alias android:name=".Alias" targetActivity="com.touchtype.swiftkey.MainActivity" />""",
     },
+    {
+        "id": "repatched_self_exclusion",
+        "title": "Re-patched APK: our own PatchesActivity is never chosen as the hook target",
+        "expect": "Lcom/touchtype/swiftkey/SomeActivity;",
+        "old_ok": False,
+        # PatchesActivity sorts before SomeActivity, so without the exclusion tier 3 would hook
+        # the Patches row into the very screen it opens.
+        "xml": """
+        <activity android:name="app.morphe.extension.swiftkey.PatchesActivity"
+                  android:exported="false" android:label="Patches" />
+        <activity android:name="com.touchtype.swiftkey.SomeActivity" android:exported="false" />""",
+    },
 ]
 
 
@@ -548,6 +562,13 @@ def run_degradation() -> None:
     check("a nameless component yields nothing instead of a bogus descriptor",
           new_descriptors(root) == set(), f"(got {sorted(new_descriptors(root))})")
 
+    print("\n[only-ours] The only activity present is our own injected PatchesActivity")
+    root = manifest("""
+        <activity android:name="app.morphe.extension.swiftkey.PatchesActivity"
+                  android:exported="false" android:label="Patches" />""")
+    check("our own screen is never hooked into itself", new_descriptors(root) == set(),
+          f"(got {sorted(new_descriptors(root))})")
+
     print("\n[raises] No fixture may make discovery throw")
     try:
         for case in CASES:
@@ -629,6 +650,10 @@ def run_mirror_drift_guard() -> None:
           'read("activity-alias", "name")' in patch_src)
     check("enabled=false components are filtered before the tiers",
           "it.className.isNotBlank() && it.enabled" in patch_src)
+    check("our own injected classes are excluded from discovery",
+          "!it.className.startsWith(EXTENSION_PACKAGE)" in patch_src)
+    check("the injected PatchesActivity is declared from the same constant",
+          'EXTENSION_PACKAGE + "swiftkey.PatchesActivity"' in patch_src)
     check("the Patches screen is still declared when no hook target is found",
           "PatchesActivity" in patch_src and "application.metadata(FLAG_SETTINGS_UI" in patch_src)
 
