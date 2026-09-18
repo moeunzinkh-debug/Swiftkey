@@ -60,39 +60,31 @@ jobs:
             exit 1
           }
 
-      # បើ build បរាជ័យ ផ្ញើ log tail ទៅ PR comment ដើម្បីងាយ debug (log Actions មិនងាយទាញយក)
-      - name: Report build failure to PR
-        if: failure() && github.event_name == 'pull_request'
+      # បើ build បរាជ័យ បង្ហាញ log tail ជា check annotations + step summary
+      # (log Actions មិនងាយទាញយកពីខាងក្រៅ — annotations អានបានតាម API)
+      - name: Report build failure log
+        if: failure()
         run: |
-          if [ -f build-output.log ]; then
-            tail -120 build-output.log > failure-tail.txt
-          else
-            echo "(no build log captured)" > failure-tail.txt
+          if [ ! -f build-output.log ]; then
+            echo "::error title=CI-build-log::no build log captured"
+            exit 0
           fi
-          python3 - "$GITHUB_TOKEN" "$GITHUB_REPOSITORY" "$GITHUB_EVENT_NUMBER" <<'PYEOF'
-          import json, sys, urllib.request
-          token, repo, number = sys.argv[1], sys.argv[2], sys.argv[3]
-          body = open("failure-tail.txt", encoding="utf-8").read().strip()
-          payload = json.dumps({
-              "body": "🤖 CI build failed (auto-report from `build_pull_request.yml`):\n\n```\n"
-                      + body[-9000:]
-                      + "\n```"
-          }).encode()
-          req = urllib.request.Request(
-              f"https://api.github.com/repos/{repo}/issues/{number}/comments",
-              data=payload,
-              headers={
-                  "Authorization": f"token {token}",
-                  "Accept": "application/vnd.github+json",
-                  "Content-Type": "application/json",
-                  "User-Agent": "build-pr-ci",
-              },
-          )
-          try:
-              urllib.request.urlopen(req, timeout=30)
-          except Exception as e:
-              print(f"could not post PR comment: {e}")
-          PYEOF
+          # បាជិលជួរសំខាន់ៗ + ជួរចុងក្រោយ ជា annotations (មើលបានក្នុង UI និង API)
+          # (ដក « :: » ចេញ បើមិនដូច្នេះវាបំផ្លាញទម្រង់ annotation)
+          grep -aE "FAILED|error:|Caused by|Exception|What went wrong" build-output.log \
+            | tail -25 | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error title=CI-build-log::$(printf '%s' "${line:0:400}" | tr -d '\r' | sed 's/::/ /g')"
+          done
+          echo "---- last 15 lines ----"
+          tail -15 build-output.log | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error title=CI-log-tail::$(printf '%s' "${line:0:400}" | tr -d '\r' | sed 's/::/ /g')"
+          done
+          {
+            echo "## CI build failure — log tail (60)"
+            echo '```'
+            tail -60 build-output.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # ត្រួតពិនិត្យថា bundle .mpp ចេញមែន ហើយបញ្ជូន path ពិតទៅ step ខាងក្រោម
       # (upload-artifact មិនស្គាល់ extglob ដូច !(*sources*) ទេ ដូច្នេះត្រូវដាក់ path ច្បាស់លាស់)
