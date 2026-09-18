@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-18T12:09:11",
-  "description": "## [1.8.2](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.8.1...v1.8.2) (2026-09-18)\n\n### 🐛 Bug Fixes\n\n* **ci:** stop .gitignore from blocking the main-to-dev back-merge ([ebe4a05](https://github.com/moeunzinkh-debug/Swiftkey/commit/ebe4a05b4d9886dca32fae49a25557862f2356a3))",
-  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.8.2/patches-1.8.2.mpp",
+  "created_at": "2026-09-18T12:19:33",
+  "description": "## [1.8.3](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.8.2...v1.8.3) (2026-09-18)\n\n### 🐛 Bug Fixes\n\n* **ci:** authenticate the back-merge clone so its push reaches dev ([b0fdd15](https://github.com/moeunzinkh-debug/Swiftkey/commit/b0fdd1560d3b55387aee19f5f46bd755bd4a7383))",
+  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.8.3/patches-1.8.3.mpp",
   "signature_download_url": "",
-  "version": "1.8.2"
+  "version": "1.8.3"
 }

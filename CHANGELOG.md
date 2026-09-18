@@ -1,3 +1,9 @@
+## [1.8.3](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.8.2...v1.8.3) (2026-09-18)
+
+### 🐛 Bug Fixes
+
+* **ci:** authenticate the back-merge clone so its push reaches dev ([b0fdd15](https://github.com/moeunzinkh-debug/Swiftkey/commit/b0fdd1560d3b55387aee19f5f46bd755bd4a7383))
+
 ## [1.8.2](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.8.1...v1.8.2) (2026-09-18)
 
 ### 🐛 Bug Fixes
