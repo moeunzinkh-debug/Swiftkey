@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.8.0...v1.8.1) (2026-09-18)
+
+### 🐛 Bug Fixes
+
+* **swiftkey:** never pick our own injected screen as the launcher ([61e3aa0](https://github.com/moeunzinkh-debug/Swiftkey/commit/61e3aa01c270146952026b304764f38c9e22fbaa))
+* **swiftkey:** resolve the launcher activity across manifest shapes ([7b19351](https://github.com/moeunzinkh-debug/Swiftkey/commit/7b193514dc13701e49893cb57f2bf2e779259d53))
+
 ## [1.8.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.7.0...v1.8.0) (2026-09-18)
 
 ### 🐛 Bug Fixes
