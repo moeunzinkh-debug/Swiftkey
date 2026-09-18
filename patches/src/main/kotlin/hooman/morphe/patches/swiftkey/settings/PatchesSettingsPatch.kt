@@ -5,6 +5,7 @@ import app.morphe.patcher.patch.BytecodePatchContext
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
+import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
@@ -14,7 +15,6 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodImplementation
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
-import com.android.tools.smali.dexlib2.mutable.MutableMethod
 import hooman.morphe.patches.swiftkey.swiftKeyCompatibility
 import hooman.morphe.patches.swiftkey.toolbar.application
 import hooman.morphe.patches.swiftkey.toolbar.children
@@ -170,9 +170,11 @@ private fun hookActivity(type: String) {
         ?: throw PatchException("SwiftKey Patches: $type->onCreate is not a mutable implementation.")
     mutableImplementation.addInstruction(
         0,
+        // p0 is `this` in an instance method; register fields beyond A are unused.
         BuilderInstruction35c(
             Opcode.INVOKE_STATIC,
             1,
+            0,
             0,
             0,
             0,
