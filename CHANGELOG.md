@@ -1,3 +1,15 @@
+## [1.8.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.7.0...v1.8.0) (2026-09-18)
+
+### 🐛 Bug Fixes
+
+* draw toolbar/settings icons with Bitmap+Canvas instead of VectorDrawable.Builder ([b4238c1](https://github.com/moeunzinkh-debug/Swiftkey/commit/b4238c168434e6c2be1edd1f51b4abf458aa8ae4))
+* use Morphe MutableMethod proxy and correct BuilderInstruction35c arity ([c93d5f3](https://github.com/moeunzinkh-debug/Swiftkey/commit/c93d5f3e843e635017c4d504300534a84d608252))
+
+### ✨ New Features
+
+* add Patches settings entry and move Text editing button into the native toolbar row ([00dbf10](https://github.com/moeunzinkh-debug/Swiftkey/commit/00dbf104217d56b6ea8f8bba690e67627dc88fc7))
+* Patches settings screen with offline mic settings + mic icon in the toolbar ([bbde329](https://github.com/moeunzinkh-debug/Swiftkey/commit/bbde3297753002827544f6f756ca594219ef0ace))
+
 ## [1.7.0](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.6.1...v1.7.0) (2026-09-16)
 
 ### ⚠ BREAKING CHANGES

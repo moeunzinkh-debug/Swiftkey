@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "patches": [
     {
       "name": "Disable telemetry",
@@ -40,6 +40,7 @@
       "description": "Makes the microphone button work like on Gboard without installing Google: SwiftKey's speech checks stop hard-requiring the Google app and any Android RecognitionService (the system default, e.g. Kõnele/Vosk offline or Speech Recognition & Synthesis) is used. Install and set a speech recognition provider in system settings first; the patch only removes the Google gate, it does not ship a speech engine.",
       "default": true,
       "dependencies": [
+        "ResourcePatch",
         "ResourcePatch"
       ],
       "compatiblePackages": [
@@ -202,6 +203,39 @@
             },
             {
               "version": "9.1.8",
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Patches",
+      "description": "Adds a Patches entry to the SwiftKey settings screen. Opens the Patches settings screen: the patches applied to this build (only the selected ones), plus the offline microphone settings (default/installed engines, offline mode toggle, engine switch and the Kõnele offline engine installer).",
+      "default": true,
+      "dependencies": [
+        "ResourcePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "com.touchtype.swiftkey",
+          "name": "Microsoft SwiftKey",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#00A4EF",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "9.13.14.5",
+              "isExperimental": true,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "9.13.13.5",
               "isExperimental": false,
               "minSdk": null,
               "description": null

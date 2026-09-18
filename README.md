@@ -10,9 +10,9 @@
 ## 🩹 បញ្ជី​បំណះ
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.7.0](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.7.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;9 patches total
+> **[v1.8.0](https://github.com/moeunzinkh-debug/Swiftkey/releases/tag/v1.8.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;10 patches total
 <details>
-<summary>📦 Microsoft SwiftKey&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
+<summary>📦 Microsoft SwiftKey&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -24,6 +24,7 @@
 |----------|----------------|-----------|
 | [Disable telemetry](#disable-telemetry) | Stops SwiftKey's first-party telemetry records and uploads, Adjust attribution, Crashlytics, Firebase Sessions, legacy Google Analytics, and app exception reporting. Push messaging and the multipurpose job service stay enabled. |  |
 | [Fix microphone voice input](#fix-microphone-voice-input) | Makes the microphone button work like on Gboard without installing Google: SwiftKey's speech checks stop hard-requiring the Google app and any Android RecognitionService (the system default, e.g. Kõnele/Vosk offline or Speech Recognition & Synthesis) is used. Install and set a speech recognition provider in system settings first; the patch only removes the Google gate, it does not ship a speech engine. |  |
+| [Patches](#patches) | Adds a Patches entry to the SwiftKey settings screen. Opens the Patches settings screen: the patches applied to this build (only the selected ones), plus the offline microphone settings (default/installed engines, offline mode toggle, engine switch and the Kõnele offline engine installer). |  |
 | [Text editing toolbar](#text-editing-toolbar) | Adds a collapsible text editing toolbar inside the keyboard: cursor arrows, Home/End, selection, Select all, Cut, Copy, Paste, Undo and Redo. Actions use the current editor; Undo/Redo depend on that app's support. Does not change login, telemetry or Google services. |  |
 
 </details>
