@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # ដូចគ្នានឹង release.yml៖ back-merge រុញ commit ដែលកែឯកសារ .github/workflows/* ទៅ dev
+      # ដូច្នេះត្រូវការ workflows permission ផងដែរ បើមិនដូច្នោះ GitHub បដិសេធការ push។
+      workflows: write
     steps:
       - name: Checkout main
         uses: actions/checkout@v7

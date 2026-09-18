@@ -15,6 +15,11 @@ jobs:
       packages: write
       id-token: write
       attestations: write
+      # ជំហាន back-merge រុញ commit ដែលកែឯកសារ .github/workflows/* ទៅ dev ដូច្នេះ GitHub
+      # ទាមទារ workflows permission ផង — បើមិនមាន ការ push ត្រូវបានបដិសេធដោយ
+      # "refusing to allow a GitHub App to create or update workflow ... without `workflows`
+      # permission" (release v1.8.3, run 35343999481) ទោះបើ merge បាន commit រួចក៏ដោយ។
+      workflows: write
     runs-on: ubuntu-latest
     env:
       # គ្រប់ gradle invocation ត្រូវការ token នេះ ដើម្បីទាញ Morphe plugin ពី
