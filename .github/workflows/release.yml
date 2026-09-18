@@ -197,6 +197,22 @@ jobs:
           workdir="$(mktemp -d)"
           git clone --quiet "$origin_url" "$workdir/repo"
           cd "$workdir/repo"
+          # clone ស្អាតនេះមិនបានទទួល credential ដែល actions/checkout កំណត់ទុកក្នុង local git
+          # config នៃ worktree ឡើយ។ ដូច្នេះ `git push` ចុងក្រោយរបស់ backmerge-main-to-dev.sh
+          # បានស្លាប់ដោយ "fatal: could not read Username for 'https://github.com': No such device
+          # or address" (release v1.8.2, run 35343088655) — merge បាន commit លើ dev រួចហើយ
+          # តែមិនដែលទៅដល់ remote ទេ ហើយ dev នៅក្រោយ main ដោយស្ងាត់ៗ។ ភ្ជាប់ auth ទៅ clone
+          # វិញ៖ យក extraheader ដែល checkout បានកំណត់ បើនៅអានបាន បើមិនដូច្នោះប្រើ token
+          # remote ជំនួស (GITHUB_TOKEN ត្រូវបាន mask ក្នុង log ហើយ job នេះមាន contents: write)។
+          # backmerge.yml មិនត្រូវការនេះទេ ព្រោះវាដំណើរការក្នុង worktree របស់ checkout ផ្ទាល់។
+          auth_header="$(git -C "$GITHUB_WORKSPACE" config --local --get \
+            http.https://github.com/.extraheader 2>/dev/null || true)"
+          if [[ -n "$auth_header" ]]; then
+            git config --local http.https://github.com/.extraheader "$auth_header"
+          else
+            git remote set-url origin \
+              "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          fi
           bash .github/scripts/backmerge-ci.sh
 
       # រាយការណ៍ស្ថានភាព dev ជា annotation — អាចអានបានតាម API ទោះបើ log ឆៅមិនអាចទាញបាន
