@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-18T12:01:42",
-  "description": "## [1.8.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.8.0...v1.8.1) (2026-09-18)\n\n### 🐛 Bug Fixes\n\n* **swiftkey:** never pick our own injected screen as the launcher ([61e3aa0](https://github.com/moeunzinkh-debug/Swiftkey/commit/61e3aa01c270146952026b304764f38c9e22fbaa))\n* **swiftkey:** resolve the launcher activity across manifest shapes ([7b19351](https://github.com/moeunzinkh-debug/Swiftkey/commit/7b193514dc13701e49893cb57f2bf2e779259d53))",
-  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.8.1/patches-1.8.1.mpp",
+  "created_at": "2026-09-18T12:09:11",
+  "description": "## [1.8.2](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.8.1...v1.8.2) (2026-09-18)\n\n### 🐛 Bug Fixes\n\n* **ci:** stop .gitignore from blocking the main-to-dev back-merge ([ebe4a05](https://github.com/moeunzinkh-debug/Swiftkey/commit/ebe4a05b4d9886dca32fae49a25557862f2356a3))",
+  "download_url": "https://github.com/moeunzinkh-debug/Swiftkey/releases/download/v1.8.2/patches-1.8.2.mpp",
   "signature_download_url": "",
-  "version": "1.8.1"
+  "version": "1.8.2"
 }

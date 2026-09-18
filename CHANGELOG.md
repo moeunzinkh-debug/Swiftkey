@@ -1,3 +1,9 @@
+## [1.8.2](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.8.1...v1.8.2) (2026-09-18)
+
+### 🐛 Bug Fixes
+
+* **ci:** stop .gitignore from blocking the main-to-dev back-merge ([ebe4a05](https://github.com/moeunzinkh-debug/Swiftkey/commit/ebe4a05b4d9886dca32fae49a25557862f2356a3))
+
 ## [1.8.1](https://github.com/moeunzinkh-debug/Swiftkey/compare/v1.8.0...v1.8.1) (2026-09-18)
 
 ### 🐛 Bug Fixes
