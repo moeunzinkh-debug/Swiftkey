@@ -42,7 +42,7 @@ jobs:
           echo "✅ README markers intact"
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           # សមនឹង release.yml និង README (AGP 9 + compileSdk 36)
