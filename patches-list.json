@@ -70,149 +70,6 @@
       "options": []
     },
     {
-      "name": "GmsCore Bytecode Redirect (MicroG RE)",
-      "description": "Rewire all Google Play Services references to MicroG RE's GmsCore package `app.revanced.android.gms`: GMS package-name string constants, account vendor strings, c2dm/GMS permissions and provider authorities. Keep service intent ACTIONS literal (GmsCore serves them under the original names).",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.ismaker.android.simsimi",
-          "name": "SimSimi",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#FFD93A",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.1.9",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.8",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "GmsCore Signature and Availability Bypass",
-      "description": "Neutralize the bundled play-services-basement availability/enforce checks: the enforce check returns immediately and the availability result reads SUCCESS (0), so the app runs when GmsCore replaces real GMS. Checks absent from this build must be soft-skipped, not fatal.",
-      "default": true,
-      "dependencies": [],
-      "compatiblePackages": [
-        {
-          "packageName": "com.ismaker.android.simsimi",
-          "name": "SimSimi",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#FFD93A",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.1.9",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.8",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "GmsCore support (MicroG RE)",
-      "description": "Umbrella patch pulling in 2+3+4 plus the shared manifest patch: <queries> visibility for GmsCore/speech services, account permissions, c2dm permission rename. Option: \"Original signing certificate SHA-1\" (cloned builds only). Requires MicroG RE 7.x installed.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.ismaker.android.simsimi",
-          "name": "SimSimi",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#FFD93A",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.1.9",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.8",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": [
-        {
-          "key": "originalSigningSha1",
-          "title": "Original signing certificate SHA-1",
-          "description": "Only needed when the patched APK is cloned/renamed (e.g. with the Morphe \"Clone app\" patch). GmsCore presents this SHA-1 to Google services as the app's real identity. Read it from the ORIGINAL, unmodified SimSimi APK with: apksigner verify --print-cert SimSimi.apk (use the SHA-1, hex, colon-separated). Leave empty for a normal, un-cloned install.",
-          "required": false,
-          "type": "kotlin.String",
-          "default": null,
-          "values": null
-        }
-      ]
-    },
-    {
-      "name": "MicroG Account Permissions",
-      "description": "Request GmsCore account permissions at runtime once (GET_ACCOUNTS and `app.revanced.gms.EXTENDED_ACCESS`) the first time any app activity starts, using a structural Activity-superclass walk (R8-name independent). No-op when no GmsCore is installed.",
-      "default": true,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "com.ismaker.android.simsimi",
-          "name": "SimSimi",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#FFD93A",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.1.9",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.8",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
       "name": "Patches",
       "description": "Adds a Patches entry to the SwiftKey settings screen. Opens the Patches settings screen: the patches applied to this build (only the selected ones), plus the offline microphone settings (default/installed engines, offline mode toggle, engine switch and the Kõnele offline engine installer).",
       "default": true,
@@ -236,37 +93,6 @@
             },
             {
               "version": "9.13.13.5",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "Remove ads",
-      "description": "Removes ads, banners, interstitials, rewarded ads from SimSimi. Blocks AdMob, Unity Ads, AppLovin, IronSource and other ad SDKs client-side.",
-      "default": true,
-      "dependencies": [],
-      "compatiblePackages": [
-        {
-          "packageName": "com.ismaker.android.simsimi",
-          "name": "SimSimi",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#FFD93A",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "9.1.9",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.8",
               "isExperimental": false,
               "minSdk": null,
               "description": null
@@ -311,30 +137,26 @@
       "options": []
     },
     {
-      "name": "Unlock membership",
-      "description": "Forces the VIP flag to true so premium features are unlocked client-side. Server-validated assets (cloud effects/templates) are not affected.",
+      "name": "Unlock premium",
+      "description": "Client-side premium unlock for Instant Translate On Screen. Forces the app's premium/subscription gate methods and boolean flags to true and makes its SharedPreferences report premium keys as unlocked. Best-effort: the patch log lists exactly what was found, and features validated on the server (account-bound entitlements, cloud translation quotas) stay locked.",
       "default": true,
-      "dependencies": [],
+      "dependencies": [
+        "ResourcePatch"
+      ],
       "compatiblePackages": [
         {
-          "packageName": "com.ismaker.android.simsimi",
-          "name": "SimSimi",
+          "packageName": "com.spaceship.screen.textcopy",
+          "name": "Instant Translate On Screen",
           "description": null,
           "apkFileType": null,
-          "appIconColor": "#FFD93A",
+          "appIconColor": "#2E7DF7",
           "signatures": null,
           "targets": [
             {
-              "version": "9.1.9",
-              "isExperimental": false,
+              "version": null,
+              "isExperimental": true,
               "minSdk": null,
-              "description": null
-            },
-            {
-              "version": "9.1.8",
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
+              "description": "Any build of the app; the unlock patch reports what it found in its log."
             }
           ]
         }

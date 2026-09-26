@@ -2,8 +2,8 @@ package hooman.morphe.patches.swiftkey.voice
 
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
-import hooman.morphe.patches.swiftkey.support.InvokeRedirect
-import hooman.morphe.patches.swiftkey.support.redirectInvokes
+import hooman.morphe.patches.support.InvokeRedirect
+import hooman.morphe.patches.support.redirectInvokes
 import hooman.morphe.patches.swiftkey.support.swiftKeySupportManifestPatch
 import hooman.morphe.patches.swiftkey.swiftKeyCompatibility
 import hooman.morphe.patches.swiftkey.toolbar.application

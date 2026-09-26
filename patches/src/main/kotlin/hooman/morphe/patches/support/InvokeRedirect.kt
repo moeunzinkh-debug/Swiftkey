@@ -1,4 +1,4 @@
-package hooman.morphe.patches.swiftkey.support
+package hooman.morphe.patches.support
 
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.patch.BytecodePatchContext
@@ -129,7 +129,7 @@ internal fun redirectInvokes(vararg redirects: InvokeRedirect): Int {
                         "invoke-static/range { v$start .. v$end }, ${redirect.replacementSmaliDescriptor}"
                     }
                     else -> error(
-                        "SwiftKey support: unexpected invoke instruction format for " +
+                        "Extension support: unexpected invoke instruction format for " +
                             "${redirect.definingClass}->${redirect.name}: ${original.javaClass.name}",
                     )
                 }
