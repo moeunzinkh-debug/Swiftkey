@@ -135,6 +135,33 @@
         }
       ],
       "options": []
+    },
+    {
+      "name": "Unlock premium",
+      "description": "Client-side premium unlock for Instant Translate On Screen. Forces the app's premium/subscription gate methods and boolean flags to true and makes its SharedPreferences report premium keys as unlocked. Best-effort: the patch log lists exactly what was found, and features validated on the server (account-bound entitlements, cloud translation quotas) stay locked.",
+      "default": true,
+      "dependencies": [
+        "ResourcePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "com.spaceship.screen.textcopy",
+          "name": "Instant Translate On Screen",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#2E7DF7",
+          "signatures": null,
+          "targets": [
+            {
+              "version": null,
+              "isExperimental": true,
+              "minSdk": null,
+              "description": "Any build of the app; the unlock patch reports what it found in its log."
+            }
+          ]
+        }
+      ],
+      "options": []
     }
   ]
 }
