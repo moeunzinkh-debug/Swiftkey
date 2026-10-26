@@ -129,7 +129,7 @@ jobs:
           rm -fv patches/build/libs/patches*.mpp
 
       - name: Release
-        uses: cycjimmy/semantic-release-action@v6
+        uses: cycjimmy/semantic-release-action@v8
         id: release
 
       # ៤) រក bundle ត្រឹមត្រូវតាម tag ដែលបានចេញផ្សាយ (មិនមែន wildcard)
